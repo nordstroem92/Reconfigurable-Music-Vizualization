@@ -1,37 +1,796 @@
 {
-    "@version": "3.0",
-    "part-list": {
-       "score-part": {
-          "@id": "P1",
-          "part-name": "Music"
-       }
-    },
-    "part": {
-       "@id": "P1",
-       "measure": {
-          "@number": "1",
-          "attributes": {
-             "divisions": "1",
-             "key": {
-                "fifths": "0"
-             },
-             "time": {
-                "beats": "4",
-                "beat-type": "4"
-             },
-             "clef": {
-                "sign": "G",
-                "line": "2"
-             }
-          },
-          "note": {
-             "pitch": {
-                "step": "C",
-                "octave": "4"
-             },
-             "duration": "4",
-             "type": "whole"
-          }
-       }
-    }
- }
+   "@version": "3.1",
+   "movement-title": "Quem queritis",
+   "identification": {
+      "rights": "Copyright © 2010 MakeMusic, Inc.",
+      "encoding": {
+         "software": "Finale v25 for Mac",
+         "encoding-date": "2017-12-12",
+         "supports": [
+            {
+               "@attribute": "new-system",
+               "@element": "print",
+               "@type": "yes",
+               "@value": "yes"
+            },
+            {
+               "@attribute": "new-page",
+               "@element": "print",
+               "@type": "yes",
+               "@value": "yes"
+            },
+            {
+               "@element": "accidental",
+               "@type": "yes"
+            },
+            {
+               "@element": "beam",
+               "@type": "yes"
+            },
+            {
+               "@element": "stem",
+               "@type": "yes"
+            }
+         ]
+      }
+   },
+   "defaults": {
+      "scaling": {
+         "millimeters": "6.4382",
+         "tenths": "40"
+      },
+      "page-layout": {
+         "page-height": "1736",
+         "page-width": "1341",
+         "page-margins": {
+            "@type": "both",
+            "left-margin": "81",
+            "right-margin": "81",
+            "top-margin": "99",
+            "bottom-margin": "99"
+         }
+      },
+      "system-layout": {
+         "system-margins": {
+            "left-margin": "0",
+            "right-margin": "0"
+         },
+         "system-distance": "136",
+         "top-system-distance": "79"
+      },
+      "appearance": {
+         "line-width": [
+            {
+               "@type": "stem",
+               "#text": "0.957"
+            },
+            {
+               "@type": "beam",
+               "#text": "5"
+            },
+            {
+               "@type": "staff",
+               "#text": "1.25"
+            },
+            {
+               "@type": "light barline",
+               "#text": "1.4583"
+            },
+            {
+               "@type": "heavy barline",
+               "#text": "5"
+            },
+            {
+               "@type": "leger",
+               "#text": "1.875"
+            },
+            {
+               "@type": "ending",
+               "#text": "1.4583"
+            },
+            {
+               "@type": "wedge",
+               "#text": "0.9375"
+            },
+            {
+               "@type": "enclosure",
+               "#text": "1.4583"
+            },
+            {
+               "@type": "tuplet bracket",
+               "#text": "1.4583"
+            }
+         ],
+         "note-size": [
+            {
+               "@type": "grace",
+               "#text": "50"
+            },
+            {
+               "@type": "cue",
+               "#text": "50"
+            }
+         ],
+         "distance": [
+            {
+               "@type": "hyphen",
+               "#text": "60"
+            },
+            {
+               "@type": "beam",
+               "#text": "8"
+            }
+         ]
+      },
+      "music-font": {
+         "@font-family": "Maestro,engraved",
+         "@font-size": "18.25"
+      },
+      "word-font": {
+         "@font-family": "Book Antiqua",
+         "@font-size": "10"
+      },
+      "lyric-font": {
+         "@font-family": "Book Antiqua",
+         "@font-size": "10"
+      }
+   },
+   "part-list": {
+      "score-part": {
+         "@id": "P1",
+         "part-name": {
+            "@print-object": "no",
+            "#text": "Voice"
+         },
+         "score-instrument": {
+            "@id": "P1-I1",
+            "instrument-name": "Grand Piano",
+            "instrument-sound": "voice.vocals"
+         },
+         "midi-instrument": {
+            "@id": "P1-I1",
+            "midi-channel": "1",
+            "midi-program": "1",
+            "volume": "80",
+            "pan": "0"
+         }
+      }
+   },
+   "part": {
+      "@id": "P1",
+      "measure": {
+         "@number": "1",
+         "@width": "1180",
+         "print": {
+            "system-layout": {
+               "top-system-distance": "237"
+            },
+            "measure-numbering": "none"
+         },
+         "attributes": {
+            "divisions": "8",
+            "key": {
+               "fifths": "0",
+               "mode": "major"
+            },
+            "clef": {
+               "sign": "G",
+               "line": "2"
+            }
+         },
+         "sound": {
+            "@tempo": "120"
+         },
+         "direction": [
+            {
+               "@directive": "yes",
+               "@placement": "above",
+               "direction-type": {
+                  "words": {
+                     "@default-y": "20",
+                     "#text": "Angelus dicit:"
+                  }
+               }
+            },
+            {
+               "@placement": "below",
+               "direction-type": {
+                  "words": {
+                     "@default-y": "-6",
+                     "#text": "|"
+                  }
+               },
+               "offset": "-1"
+            }
+         ],
+         "note": [
+            {
+               "@default-x": "61",
+               "pitch": {
+                  "step": "G",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "5",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@placement": "below",
+                     "@type": "start"
+                  }
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "single",
+                  "text": "Quem"
+               }
+            },
+            {
+               "@default-x": "102",
+               "pitch": {
+                  "step": "F",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "0.5",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@type": "stop"
+                  }
+               }
+            },
+            {
+               "@default-x": "143",
+               "pitch": {
+                  "step": "D",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "-9.5",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@placement": "below",
+                     "@type": "start"
+                  }
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "begin",
+                  "text": "que"
+               }
+            },
+            {
+               "@default-x": "185",
+               "pitch": {
+                  "step": "F",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "0.5",
+                  "#text": "up"
+               }
+            },
+            {
+               "@default-x": "226",
+               "pitch": {
+                  "step": "E",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "-4.5",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@type": "stop"
+                  }
+               }
+            },
+            {
+               "@default-x": "267",
+               "pitch": {
+                  "step": "F",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "0.5",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@placement": "below",
+                     "@type": "start"
+                  }
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "middle",
+                  "text": "ri"
+               }
+            },
+            {
+               "@default-x": "308",
+               "pitch": {
+                  "step": "G",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "5",
+                  "#text": "up"
+               }
+            },
+            {
+               "@default-x": "350",
+               "pitch": {
+                  "step": "F",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "0.5",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@type": "stop"
+                  }
+               }
+            },
+            {
+               "@default-x": "390",
+               "pitch": {
+                  "step": "G",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "5",
+                  "#text": "up"
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "end",
+                  "text": "tis"
+               }
+            },
+            {
+               "@default-x": "432",
+               "pitch": {
+                  "step": "F",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "0.5",
+                  "#text": "up"
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "single",
+                  "text": "in"
+               }
+            },
+            {
+               "@default-x": "473",
+               "pitch": {
+                  "step": "A",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "10",
+                  "#text": "up"
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "begin",
+                  "text": "se"
+               }
+            },
+            {
+               "@default-x": "514",
+               "pitch": {
+                  "step": "A",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "10",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@placement": "above",
+                     "@type": "start"
+                  }
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "middle",
+                  "text": "pul"
+               }
+            },
+            {
+               "@default-x": "555",
+               "pitch": {
+                  "step": "C",
+                  "octave": "5"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "-50",
+                  "#text": "down"
+               }
+            },
+            {
+               "@default-x": "597",
+               "pitch": {
+                  "step": "B",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "-55",
+                  "#text": "down"
+               }
+            },
+            {
+               "@default-x": "638",
+               "pitch": {
+                  "step": "A",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "10",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@type": "stop"
+                  }
+               }
+            },
+            {
+               "@default-x": "679",
+               "pitch": {
+                  "step": "C",
+                  "octave": "5"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "-50",
+                  "#text": "down"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@placement": "above",
+                     "@type": "start"
+                  }
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "end",
+                  "text": "chro,",
+                  "extend": {
+                     "@type": "start"
+                  }
+               }
+            },
+            {
+               "@default-x": "720",
+               "pitch": {
+                  "step": "G",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "5",
+                  "#text": "up"
+               }
+            },
+            {
+               "@default-x": "762",
+               "pitch": {
+                  "step": "A",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "10",
+                  "#text": "up"
+               }
+            },
+            {
+               "@default-x": "803",
+               "pitch": {
+                  "step": "G",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "5",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@type": "stop"
+                  }
+               },
+               "lyric": {
+                  "@number": "1",
+                  "extend": {
+                     "@type": "stop"
+                  }
+               }
+            },
+            {
+               "@default-x": "844",
+               "pitch": {
+                  "step": "G",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "5",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@placement": "below",
+                     "@type": "start"
+                  }
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "single",
+                  "text": "o"
+               }
+            },
+            {
+               "@default-x": "885",
+               "pitch": {
+                  "step": "A",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "10",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@type": "stop"
+                  }
+               }
+            },
+            {
+               "@default-x": "927",
+               "pitch": {
+                  "step": "G",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "5",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@placement": "below",
+                     "@type": "start"
+                  }
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "begin",
+                  "text": "Chri"
+               }
+            },
+            {
+               "@default-x": "967",
+               "pitch": {
+                  "step": "F",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "0.5",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@type": "stop"
+                  }
+               }
+            },
+            {
+               "@default-x": "1009",
+               "pitch": {
+                  "step": "A",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "10",
+                  "#text": "up"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@placement": "above",
+                     "@type": "start"
+                  }
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "middle",
+                  "text": "sti"
+               }
+            },
+            {
+               "@default-x": "1050",
+               "pitch": {
+                  "step": "C",
+                  "octave": "5"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "-50",
+                  "#text": "down"
+               },
+               "notations": {
+                  "slur": {
+                     "@number": "1",
+                     "@type": "stop"
+                  }
+               }
+            },
+            {
+               "@default-x": "1091",
+               "pitch": {
+                  "step": "A",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "10",
+                  "#text": "up"
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "middle",
+                  "text": "co"
+               }
+            },
+            {
+               "@default-x": "1132",
+               "pitch": {
+                  "step": "G",
+                  "octave": "4"
+               },
+               "duration": "8",
+               "voice": "1",
+               "type": "quarter",
+               "stem": {
+                  "@default-y": "5",
+                  "#text": "up"
+               },
+               "lyric": {
+                  "@default-y": "-76",
+                  "@justify": "left",
+                  "@number": "1",
+                  "syllabic": "end",
+                  "text": "lae?"
+               }
+            }
+         ],
+         "barline": {
+            "@location": "right",
+            "bar-style": "light-light"
+         }
+      }
+   }
+}

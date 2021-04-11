@@ -1,12 +1,23 @@
 <!DOCTYPE html>
 <html>
+<head>
+<style>
+#sheet {
+    border: 1px solid black;
+    width: 200px;
+    height: 200px;
+}
+.notes {
+    border: 1px solid red;
+    width: 10px;
+    height: 10px;
+}
+</style>
+</head>
 <body>
 
-<h1>My First Heading</h1>
-<p>My first paragraph.</p>
-
-<div id="sheet"> 
-</div>
+<svg id="sheet"> 
+</svg>
 
 </body>
 </html>
@@ -15,16 +26,35 @@
 <script src="https://cdn.jsdelivr.net/npm/x2js@3.4.1/x2js.min.js"></script>
 
 <script>
-    d3.json("/musicjson.json", function(data) {
-        console.log(data);
+    var musicjson;
+
+    d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/main/musicjson.json").then(function(data) {
+        drawNotes(data);
     });
 
+    function drawNotes (data){
+        console.log(data);
+        const sheet = d3.select("#sheet");
+        
+        sheet.selectAll(".notes")
+            .data(data.part.measure.note.pitch.octave)
+            .enter()
+            .append("rect")
+            .attr("x", 50)
+            .attr("y", d => d)
+            .attr("width", 100)
+            .attr("height",20)
+            .attr("fill", "green")
 
 
-    d3.select("#sheet")
-        .selectAll('p')
-        .data([1, 2 , 3])
-        .enter()
-        .append('p')
-        .text(dta => dta); 
+            /*.data(data.part.measure.note.pitch.octave)
+            .enter()
+            .append("g")
+            .attr("x", 20)
+            .attr("y", 20)
+            .attr("fill", "green")
+            .attr("stroke", "green")
+            .attr("height", 20)
+            .attr("width", d => d); */
+    }
 </script>

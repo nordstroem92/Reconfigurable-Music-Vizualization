@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+#sheet {
+    border: 1px solid black;
+    width: 800px;
+    height: 150px;
+}
+.notes {
+    border: 1px solid red;
+    width: 10px;
+    height: 10px;
+}
+.measures {
+    border: 1px solid blue;
+    height: 150px;
+}
+</style>
+</head>
+<body>
+
+<svg id="sheet">
+    <g class="firstlayer"></g>
+    <g class="secondlayer"></g>
+</svg>
+
+</body>
+</html>
+
+<script src="https://d3js.org/d3.v5.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/x2js@3.4.1/x2js.min.js"></script>
+
+<script>
+    var musicjson;
+    const pitch_classes = [{name:"C", pitch:"0"}, {name:"D", pitch:"5"}, {name:"E", pitch:"10"}, {name:"F", pitch:"15"}, {name:"G", pitch:"20"}, {name:"A", pitch:"25"}, {name:"B", pitch:"30"}];
+    const measure_length = 200;
+    const sheet = d3.select("#sheet");
+
+    d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/main/musicjson.json").then(function(data) {
+        //drawBeats();
+        drawStaffs();
+        drawNotes(data);
+    });
+
+    /*function drawBeats(){
+        d3.select("g.secondlayer").selectAll(".measures")
+            .data([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+            .enter()
+            .append("rect")
+            .attr("x", d => (d*8)-8)
+            .attr("y", 0)
+            .attr("width", 8)
+            .attr("height", 200)
+            .attr("fill", "none")
+            .attr("stroke", "black")
+            .attr("stroke-width", "0.1")
+    }
+
+    function drawStaffs(){
+        d3.select("g.firstlayer").selectAll(".measures")
+            .data([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30])
+            .enter()
+            .append("rect")
+            .attr("x", 0)
+            .attr("y", d => (d*5)-5)
+            .attr("width", 800)
+            .attr("height", 5)
+            .attr("fill", d => {
+                let color = (d % 2 == 0) ? "#DDDDDD" : "#EEEEEE";
+                return color;
+            })
+            .attr("stroke-width", "0.1")
+    }
+
+    function drawNotes (data){
+        console.log(data);
+        sheet.selectAll(".notes")
+            .data(data.part.measure.note)
+            .enter()
+            .append("rect")
+            .attr("x", d => d['@default-x']/3)
+            .attr("y", d => {
+                var pitch_name = d.pitch.step;
+                var this_pitch;
+                pitch_classes.forEach(p => {
+                    if (pitch_name == p.name) {
+                      this_pitch = p.pitch;
+                    }
+                });
+                return this_pitch*d.pitch.octave;
+            })
+            .attr("width", d => d.duration)
+            .attr("height", 5)
+            .attr("fill", "red");
+    }*/
+</script>

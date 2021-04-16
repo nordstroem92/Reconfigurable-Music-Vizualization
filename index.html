@@ -3,28 +3,24 @@
 <head>
 <style>
 #sheet {
-    border: 1px solid black;
     width: 800px;
-    height: 150px;
+    height: 250px;
 }
-.notes {
-    border: 1px solid red;
-    width: 10px;
-    height: 10px;
-}
-.measures {
-    border: 1px solid blue;
-    height: 150px;
+.dot {
+    stroke: "black"; 
+    stroke-width: "3";
+    fill: "red";
 }
 </style>
 </head>
 <body>
-
+<p>Music visualization</p>
 <svg id="sheet">
-    <g class="firstlayer"></g>
-    <g class="secondlayer"></g>
 </svg>
-
+<button id="ascending">ascending</button>
+<button id="descending">descending</button>
+<button id="c-major-sort">c-major</button>
+<button id="circle-of-fifths-sort">circle-of-fifths sort</button>
 </body>
 </html>
 
@@ -33,65 +29,157 @@
 
 <script>
     var musicjson;
-    const pitch_classes = [{name:"C", pitch:"0"}, {name:"D", pitch:"5"}, {name:"E", pitch:"10"}, {name:"F", pitch:"15"}, {name:"G", pitch:"20"}, {name:"A", pitch:"25"}, {name:"B", pitch:"30"}];
+    var pitch_classes = [{name:"C", octave:"5"}, {name:"Db", octave:"5"}, {name:"D", octave:"5"}, {name:"Eb", octave:"5"}, {name:"E", octave:"5"}, {name:"F", octave:"5"}, {name:"Gb", octave:"5"}, {name:"G", octave:"5"}, {name:"Ab", octave:"5"}, {name:"A", octave:"5"}, {name:"Bb", octave:"5"}, {name:"B", octave:"5"}];
+    const c_major = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+    const circle_of_fifths = ["C", "G", "D", "A", "E", "B", "Gb", "Db", "Ab", "Eb", "Bb, F"];
     const measure_length = 200;
     const sheet = d3.select("#sheet");
+    const sheet_height = document.getElementById("sheet").height.baseVal.value;
+    const bar_height = 15;
 
-    d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/main/musicjson.json").then(function(data) {
-        //drawBeats();
-        drawStaffs();
-        drawNotes(data);
+    d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/master/MusicJSON/New_Light.json").then(function(data) {
+        drawStartDot(data);
+        drawYAxis();
     });
 
-    /*function drawBeats(){
-        d3.select("g.secondlayer").selectAll(".measures")
-            .data([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-            .enter()
-            .append("rect")
-            .attr("x", d => (d*8)-8)
-            .attr("y", 0)
-            .attr("width", 8)
-            .attr("height", 200)
-            .attr("fill", "none")
-            .attr("stroke", "black")
-            .attr("stroke-width", "0.1")
+    document.getElementById("circle-of-fifths-sort").onclick = function(event) { //Sort by circle of fifths
+        sortYAxis(d3.ascending);
+        sortYAxisCustom(circle_of_fifths)   
     }
 
-    function drawStaffs(){
-        d3.select("g.firstlayer").selectAll(".measures")
-            .data([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30])
+    document.getElementById("c-major-sort").onclick = function(event) { //Chromatic sort
+        sortYAxisCustom(c_major) 
+    }
+
+    document.getElementById("ascending").onclick = function(event) { //ASCENDING SORT SORT
+        sortYAxis(d3.ascending);
+    }
+    document.getElementById("descending").onclick = function(event) { // DESCENDING SORT
+        sortYAxis(d3.descending);
+    }
+
+    function drawYAxis(){
+        sheet.selectAll("rect")
+            .data(pitch_classes)
             .enter()
             .append("rect")
-            .attr("x", 0)
-            .attr("y", d => (d*5)-5)
-            .attr("width", 800)
-            .attr("height", 5)
-            .attr("fill", d => {
-                let color = (d % 2 == 0) ? "#DDDDDD" : "#EEEEEE";
-                return color;
+            .attr("height", bar_height)
+            .attr("width", 400)
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height)
+            .attr("id", (d, i) => {
+                return d.name;
             })
-            .attr("stroke-width", "0.1")
+            .style("fill", "none")
+            .style("stroke", "black")
+            .style("stroke-width", "0.1");
+        
+        sheet.selectAll("text")
+            .data(pitch_classes)
+            .enter()
+            .append("text")
+            .attr("x", 5 )
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height/2)
+            .attr("font-size", "8px")
+            .text(d => d.name);
     }
 
-    function drawNotes (data){
-        console.log(data);
-        sheet.selectAll(".notes")
-            .data(data.part.measure.note)
+    function drawStartDot(data){
+        sheet.selectAll("circle")
+            .data(data.part[0].measure[1].note)
             .enter()
-            .append("rect")
-            .attr("x", d => d['@default-x']/3)
-            .attr("y", d => {
-                var pitch_name = d.pitch.step;
-                var this_pitch;
-                pitch_classes.forEach(p => {
-                    if (pitch_name == p.name) {
-                      this_pitch = p.pitch;
+            .append("circle")
+            .attr("cx", d => {
+                var cx = (d["@default-x"]) ? cx = d["@default-x"] : cx = -10;
+                return cx;
+            })
+            .attr("cy", (d) => {
+               if (!d.pitch) { cy = 0} else {
+                var pitch = pitch_classes.find(pc => pc.name === d.pitch.step && pc.octave == d.pitch.octave);
+                console.log(pitch);
+                var pitch_index = pitch_classes.indexOf(pitch);
+                cy = pitch_index;
+                console.log("index "+pitch_index);
+               }
+               return sheet_height-cy*bar_height-bar_height/2;
+            })
+            .attr("r", bar_height/4)
+            .style("fill", "none")
+            .style("stroke", "red"); 
+    }
+
+
+    function sortYAxis(sorting_function, sorting_pattern) { // DESCENDING SORT
+        sheet.selectAll("text")
+            .sort((a,b) => sorting_function(a.name, b.name,  sorting_pattern))
+            .transition().duration(500)
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height/2);
+        sheet.selectAll("rect")
+            .sort((a,b) => sorting_function(a.name, b.name,  sorting_pattern))
+            .transition().duration(500)
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height);
+
+            sheet.selectAll("circle")
+            .transition().duration(500)
+            .attr("cy", (d) => {
+               if (!d.pitch) { cy = 0} else {
+                var pitch_class = String(d.pitch.step+d.pitch.octave);
+                pitch_classes = pitch_classes.sort((a,b) => sorting_function(a.name, b.name, sorting_pattern));
+                var pitch = pitch_classes.find(pc => pc.name === d.pitch.step && pc.octave == d.pitch.octave);
+                var pitch_index = pitch_classes.indexOf(pitch);
+                cy = pitch_index;
+               }
+               return sheet_height-cy*bar_height-bar_height/2;
+            })
+    }
+
+    function sortYAxisCustom(sorting_pattern) { //Chromatic sort
+        sheet.selectAll("text")
+            .sort((a, b) => SortByArray(a, b, sorting_pattern))
+            .transition().duration(500)
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height/2);
+        sheet.selectAll("rect")
+            .sort((a, b) => SortByArray(a, b, sorting_pattern))
+            .transition().duration(500)
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height);
+
+        sheet.selectAll("circle")
+            .transition().duration(500)
+            .attr("cy", (d) => {
+               if (!d.pitch) { cy = 0} else {
+                var pitch_class = String(d.pitch.step+d.pitch.octave);
+                pitch_classes = pitch_classes.sort((a, b) => SortByArray(a, b, sorting_pattern))
+                var pitch = pitch_classes.find(pc => pc.name === d.pitch.step && pc.octave == d.pitch.octave);
+                var pitch_index = pitch_classes.indexOf(pitch);
+                cy = pitch_index;
+               }
+               return sheet_height-cy*bar_height-bar_height/2;
+            })
+    }
+
+    function SortByArray(x, y, sorting_pattern) {
+                var x_pitch = x.name;
+                var x_octave = x.octave;
+                var y_pitch = y.name;
+                var y_octave = y.octave;
+                var x_index, y_index;
+                for (i = 0; i < sorting_pattern.length; i++) {
+                    if(sorting_pattern[i] == x_pitch){
+                        x_index = i;
                     }
-                });
-                return this_pitch*d.pitch.octave;
-            })
-            .attr("width", d => d.duration)
-            .attr("height", 5)
-            .attr("fill", "red");
-    }*/
+                    if(sorting_pattern[i] == y_pitch){
+                        y_index = i;
+                    }
+                }
+                if (x_octave >= y_octave) {
+                    if (x_index >= y_index) {
+                        return 1;
+                    } else if (x_index-1 < y_index){
+                        return -1;
+                    }
+                } else {
+                    return -1;
+                }
+                return 0;
+     }
+
 </script>

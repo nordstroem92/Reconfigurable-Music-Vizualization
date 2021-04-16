@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+#sheet {
+    width: 800px;
+    height: 150px;
+}
+.dot {
+    stroke: "black"; 
+    stroke-width: "3";
+    fill: "red";
+}
+</style>
+</head>
+<body>
+<p>Music visualization</p>
+<svg id="sheet">
+</svg>
+<button id="ascending">ascending</button>
+<button id="descending">descending</button>
+</body>
+</html>
+
+<script src="https://d3js.org/d3.v5.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/x2js@3.4.1/x2js.min.js"></script>
+
+<script>
+    var musicjson;
+    var pitch_classes = [{name:"C5", pitch:"20"}, {name:"D5", pitch:"40"}, {name:"E5", pitch:"60"}, {name:"F5", pitch:"80"}, {name:"G5", pitch:"100"}, {name:"A5", pitch:"120"}, {name:"B5", pitch:"140"}];
+    const measure_length = 200;
+    const sheet = d3.select("#sheet");
+    const sheet_height = document.getElementById("sheet").height.baseVal.value;
+    const bar_height = 15;
+
+    d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/master/MusicJSON/New_Light.json").then(function(data) {
+        drawStartDot(data);
+        drawYAxis();
+        console.log(pitch_classes);
+    });
+
+    document.getElementById("ascending").onclick = function(event) { 
+        sheet.selectAll("text")
+            .sort((a,b) => d3.ascending(a.name, b.name))
+            .transition().duration(500)
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height/2);
+        sheet.selectAll("rect")
+            .sort((a,b) => d3.ascending(a.name, b.name))
+            .transition().duration(500)
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height);
+
+        sheet.selectAll("circle")
+            .transition().duration(500)
+            .attr("cy", (d) => {
+               if (!d.pitch) { cy = 0} else {
+                var pitch_class = String(d.pitch.step+d.pitch.octave);
+                pitch_classes = pitch_classes.sort((a,b) => d3.ascending(a.name, b.name));
+                var pitch = pitch_classes.find(pc => pc.name === pitch_class);
+                var pitch_index = pitch_classes.indexOf(pitch);
+                cy = pitch_index;
+                console.log("index "+pitch_index);
+               }
+               return sheet_height-cy*bar_height-bar_height/2;
+            })
+            
+    }
+    document.getElementById("descending").onclick = function(event) { 
+        sheet.selectAll("text")
+            .sort((a,b) => d3.descending(a.name, b.name))
+            .transition().duration(500)
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height/2);
+        sheet.selectAll("rect")
+            .sort((a,b) => d3.descending(a.name, b.name))
+            .transition().duration(500)
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height);
+
+            sheet.selectAll("circle")
+            .transition().duration(500)
+            .attr("cy", (d) => {
+               if (!d.pitch) { cy = 0} else {
+                var pitch_class = String(d.pitch.step+d.pitch.octave);
+                pitch_classes = pitch_classes.sort((a,b) => d3.descending(a.name, b.name));
+                var pitch = pitch_classes.find(pc => pc.name === pitch_class);
+                var pitch_index = pitch_classes.indexOf(pitch);
+                cy = pitch_index;
+                console.log("index "+pitch_index);
+               }
+               return sheet_height-cy*bar_height-bar_height/2;
+            })
+    }
+
+    function drawYAxis(){
+        //sheet.selectAll("rect").remove();
+        sheet.selectAll("rect")
+            .data(pitch_classes)
+            .enter()
+            .append("rect")
+            .attr("height", bar_height)
+            .attr("width", 400)
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height)
+            .attr("id", (d, i) => {
+                return d.name;
+            })
+            .style("fill", "none")
+            .style("stroke", "black")
+            .style("stroke-width", "0.1");
+        
+        //sheet.selectAll("text").remove();
+        sheet.selectAll("text")
+            .data(pitch_classes)
+            .enter()
+            .append("text")
+            .attr("x", 5 )
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height/2)
+            .attr("font-size", "8px")
+            .text(d => d.name);
+    }
+
+    function drawStartDot(data){
+        sheet.selectAll("circle")
+            .data(data.part[0].measure[1].note)
+            .enter()
+            .append("circle")
+            .attr("cx", d => {
+                var cx = (d["@default-x"]) ? cx = d["@default-x"] : cx = -10;
+                return cx;
+            })
+            .attr("cy", (d) => {
+               if (!d.pitch) { cy = 0} else {
+                var pitch_class = String(d.pitch.step+d.pitch.octave);
+                var pitch = pitch_classes.find(pc => pc.name === pitch_class);
+                var pitch_index = pitch_classes.indexOf(pitch);
+                cy = pitch_index;
+                console.log("index "+pitch_index);
+               }
+               return sheet_height-cy*bar_height-bar_height/2;
+            })
+            .attr("r", bar_height/4)
+            .style("fill", "none")
+            .style("stroke", "red"); 
+    }
+
+</script>

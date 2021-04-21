@@ -162,7 +162,7 @@ p {
         }
     }
 
-    /*function drawHarmony(data){
+    function drawHarmony(data){
         console.log(data);
         sheet.selectAll("text.harmony")
         .data(data.part[2].measure)
@@ -208,7 +208,7 @@ p {
             .style("stroke", "black")
             .style("stroke-width", "0.1");
         }
-    }*/
+    }
 
     function drawNotes(data){
         var sum_previous_durations = 0;
@@ -220,7 +220,7 @@ p {
             .attr("cx", d => get_note_start_cx(d))
             .attr("cy", d => get_note_cy(d))
             .attr("r", d => get_note_r(d))
-            .style("fill", d => get_note_start_color(d))
+            .style("fill", d => {get_note_start_color(d)})
             .style("stroke", d => get_note_start_color(d)); 
         }
 

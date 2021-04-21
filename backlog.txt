@@ -1,0 +1,4 @@
+[x] Fix coordianates for rest notes
+[] Fix rest notes to center
+[] clean up sort-y.js code
+[] Do something with grace notes

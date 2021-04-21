@@ -70,6 +70,7 @@ p {
         drawYAxis();
         drawYLabels();
         drawMeasures(data);
+        //drawHarmony(data);
         drawBeats(data);
     });
 
@@ -104,7 +105,7 @@ p {
             .style("stroke", "rgba(0,0,0,0.5)")
             .style("stroke-width", "1");
         
-        sheet_info.selectAll("text")
+        sheet_info.selectAll("text.y-labels")
             .data(pitch_classes)
             .enter()
             .append("text")
@@ -161,8 +162,55 @@ p {
         }
     }
 
-    function drawNotes(data){
+    /*function drawHarmony(data){
         console.log(data);
+        sheet.selectAll("text.harmony")
+        .data(data.part[2].measure)
+        .enter()
+        .append("text")
+        .attr("x", (d, i) => {
+            return (i-1)*measure_scale;
+        })
+        .attr("y", 20 )
+        .attr("font-size", "14px")
+        .attr("font-family", "Arial")
+        .text(d => {
+            if (d['harmony']) {
+                if(d['harmony']['function']) {
+                    return d['harmony']['function'];
+                } else if (Array.isArray(d['harmony'])) {
+                    var text = ""; 
+                    for (i = 0; i < d['harmony'].length; i++) {
+                        text += d['harmony'][i]['function']+" – ";
+                    }
+                    return text;
+                }
+            } else {
+                return "";
+            }
+        });
+
+        var sum_previous_durations = 0;
+        for(i = 0; i < data.part[2].measure.length; i++) {
+            sheet.selectAll("rect.harmony-box")
+            .data(data.part[2].measure[i].note)
+            .enter()
+            .append("rect")
+            .attr("height", bar_height)
+            .attr("width", "100%")
+            .attr("y", 100)
+            .attr("x", (d, j) => {
+                if(d['chord']){
+                    console.log(data.part[2].measure[i].note[j-1]['@default-x'] == d['@default-x'])
+                }
+            })
+            .style("fill", "none")
+            .style("stroke", "black")
+            .style("stroke-width", "0.1");
+        }
+    }*/
+
+    function drawNotes(data){
         var sum_previous_durations = 0;
         for(i = 0; i < data.part[2].measure.length; i++) {
             sheet.selectAll("circle.start-dot")

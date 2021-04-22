@@ -4,13 +4,55 @@
 }
 document.getElementById("c-major-sort").onclick = function(event) { //Chromatic sort
     sortYAxisCustom(c_major) 
-}
+}*/
+
 document.getElementById("ascending").onclick = function(event) { //ASCENDING SORT SORT
     sortYAxis(d3.ascending);
 }
+
 document.getElementById("descending").onclick = function(event) { // DESCENDING SORT
     sortYAxis(d3.descending);
-}*/
+}
+
+document.getElementById("measure-slider").onchange = function(event) { // DESCENDING SORT
+    adjustMeasureRange();
+}
+
+document.getElementById("beat-unit-slider").onchange = function(event) { // DESCENDING SORT
+    adjustBeatUnits(4);
+}
+
+function adjustBeatUnits(){
+    var slider_value = document.getElementById("beat-unit-slider").value;
+    drawBeats(slider_value);
+}
+
+function adjustMeasureRange(){
+    var slider_value = document.getElementById("measure-slider").value;
+    sheet.selectAll("rect.note")
+    .transition().duration(500)
+    .attr("x", d => (d['@default-x']*slider_value))
+    .attr("width", d => ((measure_scale/16)*parseInt(d["duration"])*slider_value)-beat_offset);
+
+    sheet.selectAll("line.measure")
+    .transition().duration(500)
+    .attr("x1", d => parseInt(d["@number"])*measure_scale*slider_value)
+    .attr("x2", d => parseInt(d["@number"])*measure_scale*slider_value);
+    
+    var sum_of_measures = json_data.part[2].measure.length;
+    var segments = document.getElementById("beat-unit-slider").value;;
+    d3.selectAll(".beat")
+    .transition().duration(500)
+    .attr("x1", (d, j) => {
+        var length = (measure_scale*slider_value)/segments;
+        return j*length;
+    })
+    .attr("x2", (d, j) => {
+        var length = (measure_scale*slider_value)/segments;
+        return j*length;
+    });
+
+}
 
 function sortYAxis(sorting_function, sorting_pattern) { // DESCENDING SORT
     sheet_info.selectAll("text")
@@ -31,23 +73,21 @@ function sortYAxis(sorting_function, sorting_pattern) { // DESCENDING SORT
         .attr("cy", (d) => {
            if (!d.pitch) { cy = 0} else {
             pitch_classes = pitch_classes.sort((a,b) => sorting_function(a.name, b.name, sorting_pattern));
-            var pitch = pitch_classes.find(pc => pc.name === d.pitch.step && pc.octave == d.pitch.octave);
+            var pitch = pitch_classes.find(pc => pc.name === d.pitch.step);
             var pitch_index = pitch_classes.indexOf(pitch);
             cy = pitch_index;
            }
            return sheet_height-cy*bar_height-bar_height/2;
         })
 
-    var aggr_durations = 0;
     sheet.selectAll("path")
         .transition().duration(500)
         .attr("d", (d, i) => {  
-            var start_x = aggr_durations;
-            aggr_durations += d["duration"]*measure_scale;
-            var end_x = aggr_durations;
+            var start_x = d["@default-x"];
+            var end_x = start_x+(measure_scale/16)*parseInt(d["duration"])-(beat_offset*2);
             var cy;
             if (!d.pitch) { cy = 0} else { 
-                var pitch = pitch_classes.find(pc => pc.name === d.pitch.step && pc.octave == d.pitch.octave);
+                var pitch = pitch_classes.find(pc => pc.name === d.pitch.step);
                 var pitch_index = pitch_classes.indexOf(pitch);
                 cy = pitch_index;
                 cy = sheet_height-cy*bar_height-bar_height/2
@@ -117,13 +157,9 @@ function SortByArray(x, y, sorting_pattern) {
                     y_index = i;
                 }
             }
-            if (x_octave >= y_octave) {
-                if (x_index >= y_index) {
-                    return 1;
-                } else if (x_index-1 < y_index){
-                    return -1;
-                }
-            } else {
+            if (x_index >= y_index) {
+                return 1;
+            } else if (x_index-1 < y_index){
                 return -1;
             }
             return 0;

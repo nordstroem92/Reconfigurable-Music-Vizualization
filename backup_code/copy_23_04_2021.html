@@ -2,25 +2,6 @@
 <html>
 <head>
 <style>
-::-webkit-scrollbar {
-  height: 5px;
-  width: 5px;
-}
-
-/* Track */
-::-webkit-scrollbar-track {
-  background: lightgrey; 
-}
- 
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: rgb(23,115,232); 
-}
-
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(23,115,232); 
-}
 p {
     font-family: "Helvetica";
 }
@@ -28,26 +9,27 @@ p {
     width: 30px;
     display: inline-block;
     vertical-align: top;
-    height: 100%;
+    position: relative;
+    z-index: 999;
 }
 #sheet-container {
     width: 97%;
-    overflow-y: overlay;
-    overflow-y: hidden; 
+    overflow-x: scroll;
     display: inline-block;
-    height: 100%;
+}
+#sheet {
+    width: 14000px;
+    height: 1000px;
 }
 #sheet-info {
     width: 30px;
-    height: 100%;
+    height: 1000px;
 }
-#sheet {
-    height: 100%;
+.dot {
+    stroke: "black"; 
+    stroke-width: "3";
+    fill: "red";
 }
-#container{
-    vertical-align: top;
-}
-
 </style>
 </head>
 <body>
@@ -56,31 +38,24 @@ p {
 <button id="descending">descending</button>
 <button id="c-major-sort">c-major</button>
 <button id="circle-of-fifths-sort">circle-of-fifths sort</button><br>
-
+<div id="sheet-info-container">
+    <svg id="sheet-info"></svg>
+</div>
+<div id="sheet-container">
+    <svg id="sheet"></svg>
+</div>
+<br>
 <label for="points">x-axis:</label>
 <input id="measure-slider" type="range" name="points" min="0.5" max="1.5" step="0.1">
 
 <label for="points">beat units:</label>
 <input id="beat-unit-slider" type="range" name="points" value="2" min="0" max="8" step="2">
 
-<label for="points">bar-height slider</label>
-<input id="bar-height-slider" type="range" name="points" min="10" max="20">
-
-<div id="container">
-    <div id="sheet-info-container">
-        <svg id="sheet-info"></svg>
-    </div>
-    <div id="sheet-container">
-        <svg id="sheet"></svg>
-    </div>
-</div>
-<br>
 </body>
 </html>
 
 <script src="https://d3js.org/d3.v5.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/x2js@3.4.1/x2js.min.js"></script>
-<script src="https://d3js.org/d3-array.v2.min.js"></script>
 <script src="sort-y.js"></script>
 
 <script>
@@ -88,161 +63,124 @@ p {
     var pitch_classes = [{name:"C"}, {name:"D♭"}, {name:"D"}, {name:"E♭"}, {name:"E"}, {name:"F"}, {name:"G♭"}, {name:"G"}, {name:"A♭"}, {name:"A"}, {name:"B♭"}, {name:"B"}];
     const c_major = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
     const circle_of_fifths = ["C", "G", "D", "A", "E", "B", "G♭", "D♭", "A♭", "E♭", "B♭, F"];
-    const scale_of_measure = 100;
-    const beat_units = scale_of_measure/16;
-    const beat_offset = scale_of_measure/50;
+    const measure_scale = 100;
+    const beat_offset = measure_scale/50;
     const sheet_info = d3.select("#sheet-info");
     const sheet = d3.select("#sheet");
-    var sheet_height = 0;
-    var bar_height = 15;
-    const offset_top = 30;
+    const sheet_height = document.getElementById("sheet").height.baseVal.value;
+    const bar_height = 15;
     
-    var data;
-    var highest_octave = 0;
-    var lowest_octave = 10;
-    var octave_span;
+    var json_data;
 
     d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/master/MusicJSON/New_Light.json").then(function(data) {
-        data = data;
-        data_part = data.part[2];
-        overwriteDefaultX();
-        adjustSVGSize();
-        drawNotes();
+        json_data = data;
+        overwriteDefaultX(data);
+        drawNotes(data);
         drawYAxis();
         drawYLabels();
-        drawMeasures();
-        drawChordLabels();
+        drawMeasures(data);
+        drawHarmony(data);
         drawBeats(2);
-        drawTonalRelations()
     });
 
-    function drawTonalRelations() {
-        var notes = [];
-        for(i = 0; i < data_part.measure.length; i++) {
-            for (j = 0; j < data_part.measure[i].note.length; j++){
-                notes.push(data_part.measure[i].note[j])
-            }
-        }
-
-        var chords = d3.group(notes, d => d["@default-x"]);
-
-        //console.log(chords) 
-    }
-
-    function adjustSVGSize(){
-        sheet_height = offset_top+octave_span*12*bar_height;
-        d3.selectAll("#container")
-        .style("height", sheet_height+"px")
-
-        var sheet_width = data_part.measure.length*scale_of_measure;
-        sheet.style("width", sheet_width+"px");
-    
-    }
-
-    function overwriteDefaultX(){
+    function overwriteDefaultX(data){
         var sum_previous_durations = 0;;
-        for(i = 0; i < data_part.measure.length; i++) {
-            for (j = 0; j < data_part.measure[i].note.length; j++){
-                var note = data_part.measure[i].note[j];
+        for(i = 0; i < data.part[2].measure.length; i++) {
+            for (j = 0; j < data.part[2].measure[i].note.length; j++){
+                var note = data.part[2].measure[i].note[j];
                 if (!note["grace"] && !note["chord"]) {
                     note['@default-x'] = sum_previous_durations;
-                    sum_previous_durations += (beat_units)*parseInt(note["duration"]); 
+                    sum_previous_durations += (measure_scale/16)*parseInt(note["duration"]); 
                     note['@default-dx'] = sum_previous_durations;
-
-                    if(note['pitch']) {
-                        highest_octave = (highest_octave > note['pitch']['octave']) ? highest_octave : note['pitch']['octave'];
-                        lowest_octave = (lowest_octave < note['pitch']['octave']) ? lowest_octave : note['pitch']['octave'];
-                    }
-
-
                 } else if(note["grace"]){ //not grace notes
                     note['@default-x'] = sum_previous_durations-beat_offset*2;
                     note['@default-dx'] = sum_previous_durations-beat_offset*2;
                 } else if(note['chord']) {
                     note['@default-dx'] = sum_previous_durations; 
-                    note['@default-x'] = sum_previous_durations - (beat_units)*parseInt(note["duration"]); 
+                    note['@default-x'] = sum_previous_durations - (measure_scale/16)*parseInt(note["duration"]); 
                 } 
             } 
         }
-        octave_span = (parseInt(highest_octave)+1 - parseInt(lowest_octave));
     }
 
     function drawYAxis(){
-        for (i = 0; i < octave_span; i++) {
+        for (i = 0; i < 36; i++) {
             sheet.selectAll("rect.staffs")
             .data(pitch_classes)
             .enter()
             .append("rect")
-            .attr("class", "staff")
             .attr("height", bar_height)
             .attr("width", "100%")
-            .attr("y", (d, j) => sheet_height-((j+1)+(i*12))*bar_height)
+            .attr("y", d => sheet_height-i*bar_height-bar_height)
+            .attr("id", d => d.name)
             .style("fill", "none")
-            .style("stroke", "rgba(0,0,0,0.5)")
+            .style("stroke", "black")
             .style("stroke-width", "0.1");
         }
     }
 
     function drawYLabels(){
-        for(i = 0; i < octave_span; i++) {
-            sheet_info.selectAll(".info")
+        sheet_info.selectAll("rect.info")
             .data(pitch_classes)
             .enter()
             .append("rect")
-            .attr("class", "pitch-class")
             .attr("height", bar_height)
             .attr("width", "100%")
-            .attr("y", (d, j) => { 
-                return sheet_height-(((j+1)+i*12)*bar_height)})
-            .attr("id", d => d.name)
-            .style("fill", "none")
+            .attr("y", (d, i) => sheet_height-i*bar_height-bar_height)
+            .attr("id", (d, i) => {
+                return d.name;
+            })
+            .style("fill", "#DDDDDD")
             .style("stroke", "rgba(0,0,0,0.5)")
-            .style("stroke-width", "1")
-
-            sheet_info.selectAll("text.y-labels")
+            .style("stroke-width", "1");
+        
+        sheet_info.selectAll("text.y-labels")
             .data(pitch_classes)
             .enter()
             .append("text")
-            .attr("class", "y-label")
             .attr("x", 8 )
-            .attr("y", (d, j) => sheet_height-((j+i*12)*bar_height))
+            .attr("y", (d, i) => sheet_height-i*bar_height-6)
             .attr("font-size", "10px")
             .attr("font-family", "Arial")
             .text(d => d.name);
-        } 
     }
 
-    function drawMeasures() {
+    function drawMeasures(data) {
         sheet.selectAll("line.measure")
-            .data(data_part.measure)
+            .data(data.part[2].measure)
             .enter()
             .append("line")
             .attr("class", "measure")
-            .attr("x1", d => parseInt(d["@number"])*scale_of_measure)
-            .attr("y1", d => offset_top)
-            .attr("x2", d => parseInt(d["@number"])*scale_of_measure)
-            .attr("y2", d => sheet_height)
+            .attr("x1", (d) => parseInt(d["@number"])*measure_scale)
+            .attr("y1", () => {
+                return sheet_height-(bar_height*12);
+            })
+            .attr("x2", (d) => parseInt(d["@number"])*measure_scale)
+            .attr("y2", () => {
+                return sheet_height;
+            })
             .style("stroke", "black")
             .style("stroke-width", 1);
     }
     function drawBeats(s) {
         var segments = s; 
-        var sum_of_measures = data_part.measure.length;
+        var sum_of_measures = json_data.part[2].measure.length;
 
         sheet.selectAll("line.beat").attr("class", "beat").remove();
+
         for (i = 0; i < segments; i++) {
             sheet.selectAll("line.beats")
-            .data(data_part.measure)
+            .data(json_data.part[2].measure)
             .enter()
             .append("line")
             .attr("class", "beat")  
             .attr("x1", (d, j) => { 
-                var length = (scale_of_measure)/segments;
+                var length = (measure_scale)/segments;
                 return (j+(i*sum_of_measures))*length;
             })
-            .attr("y1", d => offset_top)
+            .attr("y1", d => sheet_height-(bar_height*12))
             .attr("x2", (d, j) => {
-                var length = (scale_of_measure)/segments;
+                var length = (measure_scale)/segments;
                 return (j+(i*sum_of_measures))*length;
             })
             .attr("y2", d => sheet_height)
@@ -251,13 +189,15 @@ p {
         }
     }
 
-    function drawChordLabels(){;
+    function drawHarmony(data){;
         sheet.selectAll("text")
-        .data(data_part.measure)
+        .data(data.part[2].measure)
         .enter()
         .append("text")
         .attr("class", "harmony") 
-        .attr("x", (d, i) => (i-1)*scale_of_measure)
+        .attr("x", (d, i) => {
+            return (i-1)*measure_scale;
+        })
         .attr("y", 20 )
         .attr("font-size", "14px")
         .attr("font-family", "Arial")
@@ -279,18 +219,18 @@ p {
 
     }
 
-    function drawNotes(){
+    function drawNotes(data){
         var sum_previous_durations = 0;
-        for(i = 0; i < data_part.measure.length; i++) {
+        for(i = 0; i < data.part[2].measure.length; i++) {
             sheet.selectAll(".rect")
-            .data(data_part.measure[i].note)
+            .data(data.part[2].measure[i].note)
             .enter()
             .append("rect")
             .attr("class", "note")
             .attr("height", bar_height/2)
-            .attr("width",  d => (beat_units)*parseInt(d["duration"])-beat_offset) 
+            .attr("width",  d => (measure_scale/16)*parseInt(d["duration"])-beat_offset) 
             .attr("x", d => d['@default-x'])
-            .attr("y", d => get_note_y(d)+bar_height/4)
+            .attr("y", d => get_note_y(d))
             .style("fill", d => get_note_color(d))
             .style("stroke",  d => get_note_color(d))
             .style("stroke-width", "1");
@@ -302,9 +242,9 @@ p {
             return 0;
         } else {
             var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step);
-            var pitch_index = pitch_classes.indexOf(pitch_name)+1;
-            var y = (pitch_index+(d.pitch.octave*12-lowest_octave*12))*bar_height;
-            return sheet_height-y;
+            var pitch_index = pitch_classes.indexOf(pitch_name);
+            var cy = (sheet_height-(pitch_index*d.pitch.octave)*bar_height-bar_height/1.35);
+            return cy;
         }
     }
 

@@ -15,40 +15,85 @@ document.getElementById("descending").onclick = function(event) { // DESCENDING 
 }
 
 document.getElementById("measure-slider").onchange = function(event) { // DESCENDING SORT
-    adjustMeasureRange();
+    adjustMeasureRange(500);
 }
 
 document.getElementById("beat-unit-slider").onchange = function(event) { // DESCENDING SORT
-    adjustBeatUnits(4);
+    adjustBeatUnits();
+}
+
+document.getElementById("bar-height-slider").onchange = function(event) { // DESCENDING SORT
+    adjustBarHeight();
 }
 
 function adjustBeatUnits(){
     var slider_value = document.getElementById("beat-unit-slider").value;
     drawBeats(slider_value);
+    adjustMeasureRange(0);
 }
 
-function adjustMeasureRange(){
+function adjustBarHeight(){
+    var slider_value = document.getElementById("bar-height-slider").value;
+    bar_height = slider_value;
+    sheet_height = offset_top+octave_span*12*bar_height;
+
+    sheet.transition().duration(500).style("height", sheet_height+"px");
+    d3.select("#sheet-info-container").transition().duration(500).style("height",  sheet_height+"px");
+    d3.select("#container").transition().duration(500).style("height",  sheet_height+"px");
+    sheet.selectAll("rect.staff").transition().duration(500)
+    .attr("height", bar_height)
+    .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
+
+    sheet.selectAll("line.measure").transition().duration(500)
+    .attr("y2", d => sheet_height)
+
+    sheet.selectAll("line.beat").transition().duration(500)
+    .attr("y2", d => sheet_height)
+
+    sheet.selectAll(".note").transition().duration(500)
+    .attr("y", d => get_note_y(d)+bar_height/4);
+
+    sheet_info.selectAll("rect.pitch-class").transition().duration(500)
+    .attr("height", bar_height)
+    .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
+
+    sheet_info.selectAll("text.y-label").transition().duration(500)
+    .attr("height", bar_height)
+    .attr("y", (d, i) => sheet_height-(i)*bar_height);
+
+
+}
+
+function adjustMeasureRange(transition_duration){
     var slider_value = document.getElementById("measure-slider").value;
+    var new_scale_of_measure = scale_of_measure*slider_value;
+
+    var sheet_width = data_part.measure.length*new_scale_of_measure;
+    sheet.style("width", sheet_width+"px");
+
     sheet.selectAll("rect.note")
-    .transition().duration(500)
+    .transition().duration(transition_duration)
     .attr("x", d => (d['@default-x']*slider_value))
-    .attr("width", d => ((measure_scale/16)*parseInt(d["duration"])*slider_value)-beat_offset);
+    .attr("width", d => ((scale_of_measure/16)*parseInt(d["duration"])*slider_value)-beat_offset);
 
     sheet.selectAll("line.measure")
-    .transition().duration(500)
-    .attr("x1", d => parseInt(d["@number"])*measure_scale*slider_value)
-    .attr("x2", d => parseInt(d["@number"])*measure_scale*slider_value);
+    .transition().duration(transition_duration)
+    .attr("x1", d => parseInt(d["@number"])*new_scale_of_measure)
+    .attr("x2", d => parseInt(d["@number"])*new_scale_of_measure);
+
+    sheet.selectAll("text.harmony")
+    .transition().duration(transition_duration)
+    .attr("x", (d , i) => (i-1)*new_scale_of_measure);
     
-    var sum_of_measures = json_data.part[2].measure.length;
-    var segments = document.getElementById("beat-unit-slider").value;;
+    var segments = document.getElementById("beat-unit-slider").value;
     d3.selectAll(".beat")
-    .transition().duration(500)
+    .transition().duration(transition_duration)
     .attr("x1", (d, j) => {
-        var length = (measure_scale*slider_value)/segments;
+        var length = (new_scale_of_measure)/segments;
         return j*length;
     })
     .attr("x2", (d, j) => {
-        var length = (measure_scale*slider_value)/segments;
+        var length = (new_scale_of_measure)/segments;
         return j*length;
     });
 
@@ -84,7 +129,7 @@ function sortYAxis(sorting_function, sorting_pattern) { // DESCENDING SORT
         .transition().duration(500)
         .attr("d", (d, i) => {  
             var start_x = d["@default-x"];
-            var end_x = start_x+(measure_scale/16)*parseInt(d["duration"])-(beat_offset*2);
+            var end_x = start_x+(scale_of_measure/16)*parseInt(d["duration"])-(beat_offset*2);
             var cy;
             if (!d.pitch) { cy = 0} else { 
                 var pitch = pitch_classes.find(pc => pc.name === d.pitch.step);
@@ -128,7 +173,7 @@ function sortYAxisCustom(sorting_pattern) { //Chromatic sort
         .transition().duration(500)
         .attr("d", (d, i) => {  
             var start_x = aggr_durations;
-            aggr_durations += d["duration"]*measure_scale;
+            aggr_durations += d["duration"]*scale_of_measure;
             var end_x = aggr_durations;
 
             var cy;

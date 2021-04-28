@@ -44,20 +44,26 @@ function adjustBarHeight(){
     .attr("height", bar_height)
     .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
 
-    sheet.selectAll("line.measure").transition().duration(500)
+    sheet.selectAll(".measure").transition().duration(500)
     .attr("y2", d => sheet_height)
 
-    sheet.selectAll("line.beat").transition().duration(500)
+    sheet.selectAll(".beat").transition().duration(500)
     .attr("y2", d => sheet_height)
 
     sheet.selectAll(".note").transition().duration(500)
     .attr("y", d => get_note_y(d)+bar_height/4);
 
-    sheet_info.selectAll("rect.pitch-class").transition().duration(500)
+    sheet.selectAll(".harmonic-relation")
+    .transition().duration(500)
+    .attr("y", (d, j) => {
+            return  get_note_y(d);
+    });
+
+    sheet_info.selectAll(".pitch-class").transition().duration(500)
     .attr("height", bar_height)
     .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
 
-    sheet_info.selectAll("text.y-label").transition().duration(500)
+    sheet_info.selectAll(".y-label").transition().duration(500)
     .attr("height", bar_height)
     .attr("y", (d, i) => sheet_height-(i)*bar_height);
 
@@ -71,19 +77,24 @@ function adjustMeasureRange(transition_duration){
     var sheet_width = data_part.measure.length*new_scale_of_measure;
     sheet.style("width", sheet_width+"px");
 
-    sheet.selectAll("rect.note")
+    sheet.selectAll(".note")
     .transition().duration(transition_duration)
     .attr("x", d => (d['@default-x']*slider_value))
     .attr("width", d => ((scale_of_measure/16)*parseInt(d["duration"])*slider_value)-beat_offset);
 
-    sheet.selectAll("line.measure")
+    sheet.selectAll(".measure")
     .transition().duration(transition_duration)
     .attr("x1", d => parseInt(d["@number"])*new_scale_of_measure)
     .attr("x2", d => parseInt(d["@number"])*new_scale_of_measure);
 
-    sheet.selectAll("text.harmony")
+    sheet.selectAll(".harmony")
     .transition().duration(transition_duration)
     .attr("x", (d , i) => (i-1)*new_scale_of_measure);
+
+    sheet.selectAll(".harmonic-relation")
+    .transition().duration(transition_duration)
+    .attr("x", d => d['@default-x']*slider_value)
+    .attr("width", d => ((scale_of_measure/16)*parseInt(d["duration"])*slider_value)-beat_offset);
     
     var segments = document.getElementById("beat-unit-slider").value;
     d3.selectAll(".beat")
@@ -96,7 +107,6 @@ function adjustMeasureRange(transition_duration){
         var length = (new_scale_of_measure)/segments;
         return j*length;
     });
-
 }
 
 function sortYAxis(sorting_function, sorting_pattern) { // DESCENDING SORT

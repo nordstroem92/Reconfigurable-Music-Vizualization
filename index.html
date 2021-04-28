@@ -101,10 +101,14 @@ p {
     var highest_octave = 0;
     var lowest_octave = 10;
     var octave_span;
+    var notes = [];
+    var chords;
 
     d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/master/MusicJSON/New_Light.json").then(function(data) {
         data = data;
         data_part = data.part[2];
+        createNotesArray();
+        getOctaveSpan();
         overwriteDefaultX();
         adjustSVGSize();
         drawNotes();
@@ -113,20 +117,98 @@ p {
         drawMeasures();
         drawChordLabels();
         drawBeats(2);
-        drawTonalRelations()
+        createChordsArray();
+        drawTonalRelations();
+        console.log(notes);
+        console.log(chords);
     });
 
-    function drawTonalRelations() {
-        var notes = [];
+    function createNotesArray(){
         for(i = 0; i < data_part.measure.length; i++) {
             for (j = 0; j < data_part.measure[i].note.length; j++){
                 notes.push(data_part.measure[i].note[j])
             }
         }
+    }
+    function createChordsArray(){
+        chords = d3.group(notes, d => d['@default-x']);
+        chords = Array.from(d3.group(chords.values()))
+        for(i = 0; i < chords.length; i++) { //remove rest notes
+            if(chords[i][0]['rest']) {
+               chords.splice(i, 1);
+               i--;
+            }
+        }
+    }
 
-        var chords = d3.group(notes, d => d["@default-x"]);
+    function drawTonalRelations(){
+        for(i = 0; i < chords.length; i++){ 
+                sheet.selectAll(".harmonic-relations")
+                .data(chords[i])
+                .enter()
+                .append("rect")
+                .attr("class", "harmonic-relation")
+                .attr("y", (d, j) => {
+                    if(chords[i][j+1] !== undefined){
+                        return chords[i][j+1]["@default-y"]+bar_height/2;
+                    } else {
+                        return 1000;
+                    }
+                })
+                .attr("x", d => d["@default-x"])
+                .attr("width", d => d["@default-dx"]-d["@default-x"])
+                .attr("height", (d, j) => {
+                    if(chords[i][j+1] !== undefined){
+                        return d["@default-y"]-chords[i][j+1]["@default-y"];
+                    } else {
+                        return 0;
+                    }
+                }).attr("fill",  (d, j) => {
+                    var color = 0;
+                    if(chords[i][j+1] !== undefined){
+                        var interval = d["@default-y"]-chords[i][j+1]["@default-y"]
+                        if(interval == 180 || interval == 150 || interval == 75 ||  interval == 105) {
+                            color =  "rgba(0,0,255,0.3)";
+                        } else if (interval == 15 || interval == 30 || interval == 150 || interval == 165 || interval == 90) {
+                            color = "rgba(255,255,0,0.3)";
+                        } else if (interval == 45 || interval == 60 || interval == 120 || interval == 135) {
+                            color = "rgba(127,0,127,0.3)";
+                        }
+                        return color;
+                    return color;
+                    } else {
+                        return 0;
+                    } 
+                });   
+        }
+    }
 
-        //console.log(chords) 
+    function getOctaveSpan(){
+        var note_octaves = [];
+        for(i = 0; i < notes.length; i++){
+            if(notes[i]['pitch']) {
+                    highest_octave = (highest_octave > notes[i]['pitch']['octave']) ? highest_octave : notes[i]['pitch']['octave'];
+                    lowest_octave = (lowest_octave < notes[i]['pitch']['octave']) ? lowest_octave : notes[i]['pitch']['octave'];
+            }
+        }
+        octave_span = (parseInt(highest_octave)+1 - parseInt(lowest_octave))
+    }
+
+    function overwriteDefaultX(){
+        var sum_previous_durations = 0;  
+        for(i = 0; i < notes.length; i++){
+            if (!notes[i]["grace"] && !notes[i]["chord"]) {
+                    notes[i]['@default-x'] = sum_previous_durations;
+                    sum_previous_durations += (beat_units)*parseInt(notes[i]["duration"]); 
+                    notes[i]['@default-dx'] = sum_previous_durations;
+                } else if(notes[i]["grace"]){ //not grace notes[i]s
+                    notes[i]['@default-x'] = sum_previous_durations-beat_offset*2;
+                    notes[i]['@default-dx'] = sum_previous_durations-beat_offset*2;
+                } else if(notes[i]['chord']) {
+                    notes[i]['@default-dx'] = sum_previous_durations; 
+                    notes[i]['@default-x'] = sum_previous_durations - (beat_units)*parseInt(notes[i]["duration"]); 
+                } 
+        }
     }
 
     function adjustSVGSize(){
@@ -136,35 +218,6 @@ p {
 
         var sheet_width = data_part.measure.length*scale_of_measure;
         sheet.style("width", sheet_width+"px");
-    
-    }
-
-    function overwriteDefaultX(){
-        var sum_previous_durations = 0;;
-        for(i = 0; i < data_part.measure.length; i++) {
-            for (j = 0; j < data_part.measure[i].note.length; j++){
-                var note = data_part.measure[i].note[j];
-                if (!note["grace"] && !note["chord"]) {
-                    note['@default-x'] = sum_previous_durations;
-                    sum_previous_durations += (beat_units)*parseInt(note["duration"]); 
-                    note['@default-dx'] = sum_previous_durations;
-
-                    if(note['pitch']) {
-                        highest_octave = (highest_octave > note['pitch']['octave']) ? highest_octave : note['pitch']['octave'];
-                        lowest_octave = (lowest_octave < note['pitch']['octave']) ? lowest_octave : note['pitch']['octave'];
-                    }
-
-
-                } else if(note["grace"]){ //not grace notes
-                    note['@default-x'] = sum_previous_durations-beat_offset*2;
-                    note['@default-dx'] = sum_previous_durations-beat_offset*2;
-                } else if(note['chord']) {
-                    note['@default-dx'] = sum_previous_durations; 
-                    note['@default-x'] = sum_previous_durations - (beat_units)*parseInt(note["duration"]); 
-                } 
-            } 
-        }
-        octave_span = (parseInt(highest_octave)+1 - parseInt(lowest_octave));
     }
 
     function drawYAxis(){
@@ -281,20 +334,19 @@ p {
 
     function drawNotes(){
         var sum_previous_durations = 0;
-        for(i = 0; i < data_part.measure.length; i++) {
-            sheet.selectAll(".rect")
-            .data(data_part.measure[i].note)
-            .enter()
-            .append("rect")
-            .attr("class", "note")
-            .attr("height", bar_height/2)
-            .attr("width",  d => (beat_units)*parseInt(d["duration"])-beat_offset) 
-            .attr("x", d => d['@default-x'])
-            .attr("y", d => get_note_y(d)+bar_height/4)
-            .style("fill", d => get_note_color(d))
-            .style("stroke",  d => get_note_color(d))
-            .style("stroke-width", "1");
-        }
+        sheet.selectAll(".rect")
+        .data(notes)
+        .enter()
+        .append("rect")
+        .attr("class", "note")
+        .attr("height", bar_height/2)
+        .attr("width",  d => (beat_units)*parseInt(d["duration"])-beat_offset) 
+        .attr("x", d => d['@default-x'])
+        .attr("y", d => get_note_y(d)+bar_height/4)
+        .style("fill", d => get_note_color(d))
+        .style("stroke",  d => get_note_color(d))
+        .style("stroke-width", "1");
+    
     }
 
     function get_note_y(d) {
@@ -304,6 +356,7 @@ p {
             var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step);
             var pitch_index = pitch_classes.indexOf(pitch_name)+1;
             var y = (pitch_index+(d.pitch.octave*12-lowest_octave*12))*bar_height;
+            d["@default-y"] = sheet_height-y;
             return sheet_height-y;
         }
     }

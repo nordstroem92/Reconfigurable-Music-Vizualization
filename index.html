@@ -51,10 +51,12 @@ p {
 </style>
 </head>
 <body>
-<p>Music visualization</p>
-<button id="ascending">ascending</button>
+<p><b>Music visualization</b></p>
+<label for="voicing">Choose voicing:</label>
+<select name="voicing" id="voicing">
+  </select>
 <button id="c-major-sort">c-major</button>
-<button id="circle-of-fifths-sort">circle-of-fifths sort</button><br>
+<button id="circle-of-fifths-sort">circle-of-fifths sort</button><br><br>
 
 <label for="points">x-axis:</label>
 <input id="measure-slider" type="range" name="points" min="0.5" max="1.5" step="0.1">
@@ -64,6 +66,14 @@ p {
 
 <label for="points">bar-height slider</label>
 <input id="bar-height-slider" type="range" name="points" min="10" max="20">
+
+<input checked type="checkbox" id="toggleTonalRelations" name="toggleTonalRelations" value="1">
+<label for="toggleTonalRelations"> Show interval qualities</label>
+
+<input checked type="checkbox" id="toggleAggregateNotes" name="toggleAggregateNotes" value="1">
+<label for="toggleAggregateNotes"> Aggregate notes</label>
+
+
 
 <div id="container">
     <div id="sheet-info-container">
@@ -81,23 +91,24 @@ p {
 <script src="https://cdn.jsdelivr.net/npm/x2js@3.4.1/x2js.min.js"></script>
 <script src="https://d3js.org/d3-array.v2.min.js"></script>
 <script src="sort-y.js"></script>
+<script src="update-view.js"></script>
+<script src="computations.js"></script>
 
 <script>
-    var musicjson;
-    var pitch_classes = [];
     const immutable_pitch_classes = ["C", "D♭", "D","E♭", "E","F", "G♭","G", "A♭", "A", "B♭","B"];
-    var circle_of_fifths = [];
-    var c_major = [];
     const scale_of_measure = 100;
     const beat_units = scale_of_measure/16;
     const beat_offset = scale_of_measure/50;
     const sheet_info = d3.select("#sheet-info");
     const sheet = d3.select("#sheet");
-    var sheet_height = 0;
-    var bar_height = 15;
     const offset_top = 30;
     
-    var data;
+    var pitch_classes = [];
+    var circle_of_fifths = [];
+    var c_major = [];
+    var sheet_height = 0;
+    var bar_height = 15;
+    var default_data;
     var highest_octave = 0;
     var lowest_octave = 10;
     var octave_span;
@@ -105,8 +116,9 @@ p {
     var chords;
 
     d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/master/MusicJSON/New_Light.json").then(function(data) {
-        data = data;
-        data_part = data.part[2];
+        default_data = data;
+        data_part = default_data.part[2];
+        setupUI(data);
         createNotesArray();
         getOctaveSpan();
         createPitchClassesArray();
@@ -120,6 +132,17 @@ p {
         drawBeats(2);
         drawTonalRelations();
     });
+
+
+    function setupUI(data){
+        var select_voicing = document.getElementById("voicing");
+        for (i = 0; i < data["part-list"].length; i++) {
+            var node = document.createElement("option");   
+            node.setAttribute("value", i)
+            node.innerHTML = data["part-list"][i]['part-name'];
+            select_voicing.append(node);
+        }
+    }
 
     function createNotesArray(){
         for(i = 0; i < data_part.measure.length; i++) {
@@ -160,6 +183,14 @@ p {
         }
     }
     
+    function toggleTonalRelations() {
+        var check = document.getElementById("toggleTonalRelations");
+        if(!check.checked) {
+            sheet.selectAll(".harmonic-relation").remove();
+        } else {
+            drawTonalRelations()
+        }
+    }
 
     function drawTonalRelations(){
         sheet.selectAll(".harmonic-relations")
@@ -184,19 +215,8 @@ p {
             })
             .attr("width", d => d["@default-dx"]-d["@default-x"])
             .attr("fill", (d, i) => {
-                var color = 0;
                 if(d['chord']){
                     return getInterval(notes[i].pitch, notes[i-1].pitch);
-                    /*var interval = notes[i-1]["@default-y"]-d["@default-y"];
-                    if(interval == 180 || interval == 150 || interval == 75 || interval == 105) { //perfect
-                        color =  "rgba(0,0,255,0.4)";
-                    }  else if (interval == 45 || interval == 60 || interval == 120 || interval == 135) { //imperfect
-                        color = "rgba(255,0,255,0.4)";
-                    }
-                    else if (interval == 15 || interval == 30 || interval == 150 || interval == 165 || interval == 90) { //dissonant
-                        color = "rgba(255,0,0,0.5)"; 
-                    }
-                    return color;*/
                 } else {
                     return 0;
                 } 
@@ -228,6 +248,12 @@ p {
                     notes[i]['@default-dx'] = sum_previous_durations; 
                     notes[i]['@default-x'] = sum_previous_durations - (beat_units)*parseInt(notes[i]["duration"]); 
                 } 
+        }
+        for(i = 0; i < notes.length; i++){
+            if(notes[i]["rest"]) {
+                notes.splice(i, 1);
+                i--;
+            }
         }
     }
 
@@ -360,12 +386,22 @@ p {
         .append("rect")
         .attr("class", "note")
         .attr("height", bar_height/2)
-        .attr("width",  d => (beat_units)*parseInt(d["duration"])-beat_offset) 
+        .attr("width",  (d, i) => {
+            if(!d['grace']) {
+                return (beat_units)*parseInt(d["duration"])-beat_offset;
+            } else {
+                return 0;
+            }
+        }) 
         .attr("x", d => d['@default-x'])
         .attr("y", d => get_note_y(d)+bar_height/4)
         .style("fill", d => get_note_color(d))
         .style("stroke",  d => get_note_color(d))
-        .style("stroke-width", "1");
+        .style("stroke-width", "1")
+        .on("mouseover", function (d, i) {   //needs work
+          d3.select(this).transition().duration('50')
+               .style('fill', 'red')
+        });
     }
 
     function get_note_y(d) {

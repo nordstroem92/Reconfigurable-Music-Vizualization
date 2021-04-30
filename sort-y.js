@@ -2,12 +2,18 @@ document.getElementById("circle-of-fifths-sort").onclick = function(event) { //S
     sortYAxis_custom(circle_of_fifths_sort); 
 }
 
-document.getElementById("c-major-sort").onclick = function(event) { //Chromatic sort
-    sortYAxis_custom(c_major_sort) 
+document.getElementById("voicing").onchange = function() { //Sort by circle of fifths
+    var e = document.getElementById("voicing");
+    var value = e.options[e.selectedIndex].value;
+    updateView(value);
 }
 
-document.getElementById("ascending").onclick = function(event) { //ASCENDING SORT SORT
-    sortYAxis(d3.ascending);
+document.getElementById("toggleTonalRelations").onclick = function() { //Sort by circle of fifths
+    toggleTonalRelations(); 
+}
+
+document.getElementById("c-major-sort").onclick = function(event) { //Chromatic sort
+    sortYAxis_custom(c_major_sort) 
 }
 
 document.getElementById("measure-slider").onchange = function(event) { // DESCENDING SORT
@@ -112,62 +118,6 @@ function adjustMeasureRange(transition_duration){
     });
 }
 
-function sortYAxis(sorting_pattern) { 
-    sheet_info.selectAll(".y-label")
-        .sort((a,b) => sorting_pattern(a.name, b.name))
-        .sort((a,b) => sorting_pattern(a.oct_index, b.oct_index))
-        .transition().duration(500)
-        .attr("y", (d, i) => sheet_height-i*bar_height);
-
-    sheet_info.selectAll(".pitch-class")
-        .sort((a,b) => sorting_pattern(a.name, b.name))
-        .sort((a,b) => sorting_pattern(a.oct_index, b.oct_index))
-        .transition().duration(500)
-        .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
-    
-    sheet.selectAll(".staff")
-        .sort((a,b) => sorting_pattern(a.name, b.name))
-        .sort((a,b) => sorting_pattern(a.oct_index, b.oct_index))
-        .transition().duration(500)
-        .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
-
-    pitch_classes.sort((a,b) => sorting_pattern(a.name, b.name))
-    pitch_classes.sort((a,b) => sorting_pattern(a.oct_index, b.oct_index))
-    
-    sheet.selectAll(".note")
-        .transition().duration(500)
-        .attr("y", (d) => {
-            if (!d.pitch) { 
-                return 0;
-            } else {
-                var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave+1; //this is probably a stupid solution
-                var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step && pc.oct_index == d_relative_oct);
-                var pitch_index = pitch_classes.indexOf(pitch_name)+1;
-                d["@default-y"] = sheet_height-pitch_index*bar_height+bar_height/4;
-                return d["@default-y"];
-            }
-    });
-    
-    notes.sort((a,b) => fixedSort(a, b)) 
-    sheet.selectAll(".harmonic-relation")
-        .transition().duration(500)
-        .attr("y", (d, i) => {
-            return  notes[i]["@default-y"];
-        }).attr("height", (d, i) => {
-            if(d['chord']){
-                return notes[i-1]["@default-y"]-notes[i]["@default-y"];
-            } else {
-                return 0;
-            }
-    }).attr("fill", (d, i) => { //WHAT THE FUCK
-        if(d['chord']){
-            return getInterval(notes[i].pitch, notes[i-1].pitch);
-        } else {
-            return 0;
-        } 
-    });
-}
-
 function sortYAxis_custom(sorting_pattern) { 
     sheet_info.selectAll(".y-label")
         .sort((a,b) => sorting_pattern(a, b))
@@ -200,14 +150,17 @@ function sortYAxis_custom(sorting_pattern) {
             }
     });
     
-    notes.sort((a,b) => fixedSort(a, b)) 
     sheet.selectAll(".harmonic-relation")
         .transition().duration(500)
         .attr("y", (d, i) => {
             return  notes[i]["@default-y"];
         }).attr("height", (d, i) => {
             if(d['chord']){
-                return notes[i-1]["@default-y"]-notes[i]["@default-y"];
+                if(notes[i-1]["@default-y"] > notes[i]["@default-y"]) {
+                    return notes[i-1]["@default-y"]-notes[i]["@default-y"];
+                } else {
+                    return 0;
+                }
             } else {
                 return 0;
             }
@@ -230,18 +183,6 @@ function getInterval(a, b){
         return "rgba(255,0,255,0.4)";
     } else if (interval == 1 || interval == 2 || interval == 10 || interval == 11 || interval == 6) { //Dissonant: M2 m2 M7 m7 d5 A4
         return "rgba(255,0,0,0.5)"; 
-    }
-}
-
-function fixedSort(a, b) {
-    if (a["@default-x"] <= b["@default-x"] ) {
-        if (a["@default-y"] > b["@default-y"]) {
-            return -1;
-        } else {
-            return 1;
-        }
-    } else {
-        return 1;
     }
 }
 

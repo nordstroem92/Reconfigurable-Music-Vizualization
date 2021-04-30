@@ -1,3 +1,2 @@
-[x] Fix coordianates for rest notes
-[] clean up sort-y.js code
-[] Do something with grace notes
+[] fix chord notation positioning
+[] fix coloring on sort - and in general

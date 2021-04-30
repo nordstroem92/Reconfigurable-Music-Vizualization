@@ -1,17 +1,13 @@
-/*document.getElementById("circle-of-fifths-sort").onclick = function(event) { //Sort by circle of fifths
-    sortYAxis(d3.ascending);
-    sortYAxisCustom(circle_of_fifths)   
+document.getElementById("circle-of-fifths-sort").onclick = function(event) { //Sort by circle of fifths
+    sortYAxis_custom(circle_of_fifths_sort); 
 }
+
 document.getElementById("c-major-sort").onclick = function(event) { //Chromatic sort
-    sortYAxisCustom(c_major) 
-}*/
+    sortYAxis_custom(c_major_sort) 
+}
 
 document.getElementById("ascending").onclick = function(event) { //ASCENDING SORT SORT
     sortYAxis(d3.ascending);
-}
-
-document.getElementById("descending").onclick = function(event) { // DESCENDING SORT
-    sortYAxis(d3.descending);
 }
 
 document.getElementById("measure-slider").onchange = function(event) { // DESCENDING SORT
@@ -51,12 +47,21 @@ function adjustBarHeight(){
     .attr("y2", d => sheet_height)
 
     sheet.selectAll(".note").transition().duration(500)
-    .attr("y", d => get_note_y(d)+bar_height/4);
+    .attr("y", d => {
+        d["@default-y"] = get_note_y(d)+bar_height/4;
+        return d["@default-y"]
+    });
 
     sheet.selectAll(".harmonic-relation")
     .transition().duration(500)
-    .attr("y", (d, j) => {
-            return  get_note_y(d);
+    .attr("y", (d, i) => {
+        return  notes[i]["@default-y"];
+    }).attr("height", (d, i) => {
+        if(d['chord']){
+            return notes[i-1]["@default-y"]-notes[i]["@default-y"];
+        } else {
+            return 0; 
+        }
     });
 
     sheet_info.selectAll(".pitch-class").transition().duration(500)
@@ -66,8 +71,6 @@ function adjustBarHeight(){
     sheet_info.selectAll(".y-label").transition().duration(500)
     .attr("height", bar_height)
     .attr("y", (d, i) => sheet_height-(i)*bar_height);
-
-
 }
 
 function adjustMeasureRange(transition_duration){
@@ -109,113 +112,155 @@ function adjustMeasureRange(transition_duration){
     });
 }
 
-function sortYAxis(sorting_function, sorting_pattern) { // DESCENDING SORT
-    sheet_info.selectAll("text")
-        .sort((a,b) => sorting_function(a.name, b.name,  sorting_pattern))
+function sortYAxis(sorting_pattern) { 
+    sheet_info.selectAll(".y-label")
+        .sort((a,b) => sorting_pattern(a.name, b.name))
+        .sort((a,b) => sorting_pattern(a.oct_index, b.oct_index))
         .transition().duration(500)
-        .attr("y", (d, i) => sheet_height-i*bar_height-6);
-    sheet_info.selectAll("rect")
-        .sort((a,b) => sorting_function(a.name, b.name,  sorting_pattern))
-        .transition().duration(500)
-        .attr("y", (d, i) => sheet_height-i*bar_height-bar_height);
-    sheet.selectAll("rect")
-        .sort((a,b) => sorting_function(a.name, b.name,  sorting_pattern))
-        .transition().duration(500)
-        .attr("y", (d, i) => sheet_height-i*bar_height-bar_height);
+        .attr("y", (d, i) => sheet_height-i*bar_height);
 
-    sheet.selectAll("circle")
+    sheet_info.selectAll(".pitch-class")
+        .sort((a,b) => sorting_pattern(a.name, b.name))
+        .sort((a,b) => sorting_pattern(a.oct_index, b.oct_index))
         .transition().duration(500)
-        .attr("cy", (d) => {
-           if (!d.pitch) { cy = 0} else {
-            pitch_classes = pitch_classes.sort((a,b) => sorting_function(a.name, b.name, sorting_pattern));
-            var pitch = pitch_classes.find(pc => pc.name === d.pitch.step);
-            var pitch_index = pitch_classes.indexOf(pitch);
-            cy = pitch_index;
-           }
-           return sheet_height-cy*bar_height-bar_height/2;
-        })
-
-    sheet.selectAll("path")
-        .transition().duration(500)
-        .attr("d", (d, i) => {  
-            var start_x = d["@default-x"];
-            var end_x = start_x+(scale_of_measure/16)*parseInt(d["duration"])-(beat_offset*2);
-            var cy;
-            if (!d.pitch) { cy = 0} else { 
-                var pitch = pitch_classes.find(pc => pc.name === d.pitch.step);
-                var pitch_index = pitch_classes.indexOf(pitch);
-                cy = pitch_index;
-                cy = sheet_height-cy*bar_height-bar_height/2
-            }
-            var path_d = "M "+ start_x+" "+cy+" L "+end_x+" "+cy;
-            return path_d;
-        });
-}
-
-function sortYAxisCustom(sorting_pattern) { //Chromatic sort
-    sheet_info.selectAll("text")
-        .sort((a, b) => SortByArray(a, b, sorting_pattern))
-        .transition().duration(500)
-        .attr("y", (d, i) => sheet_height-i*bar_height-6);
-    sheet_info.selectAll("rect")
-        .sort((a, b) => SortByArray(a, b, sorting_pattern))
-        .transition().duration(500)
-        .attr("y", (d, i) => sheet_height-i*bar_height-bar_height);
-    sheet.selectAll("rect")
-        .sort((a, b) => SortByArray(a, b, sorting_pattern))
-        .transition().duration(500)
-        .attr("y", (d, i) => sheet_height-i*bar_height-bar_height);
-
-    sheet.selectAll("circle")
-        .transition().duration(500)
-        .attr("cy", (d) => {
-           if (!d.pitch) { cy = 0} else {
-            pitch_classes = pitch_classes.sort((a, b) => SortByArray(a, b, sorting_pattern))
-            var pitch = pitch_classes.find(pc => pc.name === d.pitch.step && pc.octave == d.pitch.octave);
-            var pitch_index = pitch_classes.indexOf(pitch);
-            cy = pitch_index;
-           }
-           return sheet_height-cy*bar_height-bar_height/2;
-        })
+        .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
     
-    var aggr_durations = 0;
-    sheet.selectAll("path")
+    sheet.selectAll(".staff")
+        .sort((a,b) => sorting_pattern(a.name, b.name))
+        .sort((a,b) => sorting_pattern(a.oct_index, b.oct_index))
         .transition().duration(500)
-        .attr("d", (d, i) => {  
-            var start_x = aggr_durations;
-            aggr_durations += d["duration"]*scale_of_measure;
-            var end_x = aggr_durations;
+        .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
 
-            var cy;
-            if (!d.pitch) { cy = 0} else { 
-                var pitch = pitch_classes.find(pc => pc.name === d.pitch.step && pc.octave == d.pitch.octave);
-                var pitch_index = pitch_classes.indexOf(pitch);
-                cy = pitch_index;
-                cy = sheet_height-cy*bar_height-bar_height/2
+    pitch_classes.sort((a,b) => sorting_pattern(a.name, b.name))
+    pitch_classes.sort((a,b) => sorting_pattern(a.oct_index, b.oct_index))
+    
+    sheet.selectAll(".note")
+        .transition().duration(500)
+        .attr("y", (d) => {
+            if (!d.pitch) { 
+                return 0;
+            } else {
+                var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave+1; //this is probably a stupid solution
+                var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step && pc.oct_index == d_relative_oct);
+                var pitch_index = pitch_classes.indexOf(pitch_name)+1;
+                d["@default-y"] = sheet_height-pitch_index*bar_height+bar_height/4;
+                return d["@default-y"];
             }
-            var path_d = "M "+ start_x+" "+cy+" L "+end_x+" "+cy;
-            return path_d;
+    });
+    
+    notes.sort((a,b) => fixedSort(a, b)) 
+    sheet.selectAll(".harmonic-relation")
+        .transition().duration(500)
+        .attr("y", (d, i) => {
+            return  notes[i]["@default-y"];
+        }).attr("height", (d, i) => {
+            if(d['chord']){
+                return notes[i-1]["@default-y"]-notes[i]["@default-y"];
+            } else {
+                return 0;
+            }
+    }).attr("fill", (d, i) => { //WHAT THE FUCK
+        if(d['chord']){
+            return getInterval(notes[i].pitch, notes[i-1].pitch);
+        } else {
+            return 0;
+        } 
+    });
+}
+
+function sortYAxis_custom(sorting_pattern) { 
+    sheet_info.selectAll(".y-label")
+        .sort((a,b) => sorting_pattern(a, b))
+        .transition().duration(500)
+        .attr("y", (d, i) => sheet_height-i*bar_height);
+
+    sheet_info.selectAll(".pitch-class")
+        .sort((a,b) => sorting_pattern(a, b))
+        .transition().duration(500)
+        .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
+    
+    sheet.selectAll(".staff")
+        .sort((a,b) => sorting_pattern(a, b))
+        .transition().duration(500)
+        .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
+
+    pitch_classes.sort((a,b) => sorting_pattern(a, b))
+    
+    sheet.selectAll(".note")
+        .transition().duration(500)
+        .attr("y", (d) => {
+            if (!d.pitch) { 
+                return 0;
+            } else {
+                var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave+1; //this is probably a stupid solution
+                var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step && pc.oct_index == d_relative_oct);
+                var pitch_index = pitch_classes.indexOf(pitch_name)+1;
+                d["@default-y"] = sheet_height-pitch_index*bar_height+bar_height/4;
+                return d["@default-y"];
+            }
+    });
+    
+    notes.sort((a,b) => fixedSort(a, b)) 
+    sheet.selectAll(".harmonic-relation")
+        .transition().duration(500)
+        .attr("y", (d, i) => {
+            return  notes[i]["@default-y"];
+        }).attr("height", (d, i) => {
+            if(d['chord']){
+                return notes[i-1]["@default-y"]-notes[i]["@default-y"];
+            } else {
+                return 0;
+            }
+        }).attr("fill", (d, i) => {
+            if(d['chord']){
+                return getInterval(notes[i].pitch, notes[i-1].pitch);
+            } else {
+                return 0;
+            } 
         });
 }
 
-function SortByArray(x, y, sorting_pattern) {
-            var x_pitch = x.name;
-            var x_octave = x.octave;
-            var y_pitch = y.name;
-            var y_octave = y.octave;
-            var x_index, y_index;
-            for (i = 0; i < sorting_pattern.length; i++) {
-                if(sorting_pattern[i] == x_pitch){
-                    x_index = i;
-                }
-                if(sorting_pattern[i] == y_pitch){
-                    y_index = i;
-                }
-            }
-            if (x_index >= y_index) {
-                return 1;
-            } else if (x_index-1 < y_index){
-                return -1;
-            }
-            return 0;
- }
+function getInterval(a, b){
+    var interval = immutable_pitch_classes.indexOf(a.step) - immutable_pitch_classes.indexOf(b.step)
+    if (interval < 0) { interval = 12+interval }
+
+    if (interval == 0 || interval == 12 || interval == 7 || interval == 5) { //Perfect: p1 p8 p5 p4
+        return "rgba(0,0,255,0.4)";
+    } else if (interval == 3 || interval == 4 || interval == 8 || interval == 9) { //Imperfect: M3 m3 M6 m6
+        return "rgba(255,0,255,0.4)";
+    } else if (interval == 1 || interval == 2 || interval == 10 || interval == 11 || interval == 6) { //Dissonant: M2 m2 M7 m7 d5 A4
+        return "rgba(255,0,0,0.5)"; 
+    }
+}
+
+function fixedSort(a, b) {
+    if (a["@default-x"] <= b["@default-x"] ) {
+        if (a["@default-y"] > b["@default-y"]) {
+            return -1;
+        } else {
+            return 1;
+        }
+    } else {
+        return 1;
+    }
+}
+
+function circle_of_fifths_sort(a ,b){
+    var obj_a = circle_of_fifths.find(cof => cof.name == a.name && cof.oct_index == a.oct_index);
+    var obj_b = circle_of_fifths.find(cof => cof.name == b.name && cof.oct_index == b.oct_index);
+    if (circle_of_fifths.indexOf(obj_a) < circle_of_fifths.indexOf(obj_b)){
+        return -1; 
+    } else {
+        return 1;
+    }
+}
+
+function c_major_sort(a ,b){
+    var obj_a = c_major.find(major => major.name == a.name && major.oct_index == a.oct_index);
+    var obj_b = c_major.find(major => major.name == b.name && major.oct_index == b.oct_index);
+    if (c_major.indexOf(obj_a) < c_major.indexOf(obj_b)){
+        return -1; 
+    } else {
+        return 1;
+    }
+}

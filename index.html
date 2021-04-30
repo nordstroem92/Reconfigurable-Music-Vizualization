@@ -53,7 +53,6 @@ p {
 <body>
 <p>Music visualization</p>
 <button id="ascending">ascending</button>
-<button id="descending">descending</button>
 <button id="c-major-sort">c-major</button>
 <button id="circle-of-fifths-sort">circle-of-fifths sort</button><br>
 
@@ -85,9 +84,10 @@ p {
 
 <script>
     var musicjson;
-    var pitch_classes = [{name:"C"}, {name:"D♭"}, {name:"D"}, {name:"E♭"}, {name:"E"}, {name:"F"}, {name:"G♭"}, {name:"G"}, {name:"A♭"}, {name:"A"}, {name:"B♭"}, {name:"B"}];
-    const c_major = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
-    const circle_of_fifths = ["C", "G", "D", "A", "E", "B", "G♭", "D♭", "A♭", "E♭", "B♭, F"];
+    var pitch_classes = [];
+    const immutable_pitch_classes = ["C", "D♭", "D","E♭", "E","F", "G♭","G", "A♭", "A", "B♭","B"];
+    var circle_of_fifths = [];
+    var c_major = [];
     const scale_of_measure = 100;
     const beat_units = scale_of_measure/16;
     const beat_offset = scale_of_measure/50;
@@ -109,18 +109,16 @@ p {
         data_part = data.part[2];
         createNotesArray();
         getOctaveSpan();
+        createPitchClassesArray();
         overwriteDefaultX();
         adjustSVGSize();
         drawNotes();
-        drawYAxis();
+        drawStaffs();
         drawYLabels();
         drawMeasures();
         drawChordLabels();
         drawBeats(2);
-        createChordsArray();
         drawTonalRelations();
-        console.log(notes);
-        console.log(chords);
     });
 
     function createNotesArray(){
@@ -130,57 +128,79 @@ p {
             }
         }
     }
-    function createChordsArray(){
-        chords = d3.group(notes, d => d['@default-x']);
-        chords = Array.from(d3.group(chords.values()))
-        for(i = 0; i < chords.length; i++) { //remove rest notes
-            if(chords[i][0]['rest']) {
-               chords.splice(i, 1);
-               i--;
-            }
+
+    function createPitchClassesArray(){
+        for(i = 1; i < octave_span+1; i++) {
+            pitch_classes.push( 
+            {name:"C", oct_index: i}, {name:"D♭", oct_index: i}, 
+            {name:"D", oct_index: i}, {name:"E♭", oct_index: i}, 
+            {name:"E", oct_index: i}, {name:"F", oct_index: i}, 
+            {name:"G♭", oct_index: i}, {name:"G", oct_index: i}, 
+            {name:"A♭", oct_index: i}, {name:"A", oct_index: i}, 
+            {name:"B♭", oct_index: i}, {name:"B", oct_index: i}
+            );
+
+            circle_of_fifths.push(
+            {name:"C", oct_index: i}, {name:"G", oct_index: i}, 
+            {name:"D", oct_index: i}, {name:"A", oct_index: i}, 
+            {name:"E", oct_index: i}, {name:"B", oct_index: i}, 
+            {name:"G♭", oct_index: i}, {name:"D♭", oct_index: i}, 
+            {name:"A♭", oct_index: i}, {name:"E♭", oct_index: i}, 
+            {name:"B♭", oct_index: i}, {name:"F", oct_index: i}
+            );
+
+            c_major.push(
+            {name:"C", oct_index: i}, {name:"D♭", oct_index: i}, 
+            {name:"D", oct_index: i}, {name:"E♭", oct_index: i}, 
+            {name:"E", oct_index: i}, {name:"F", oct_index: i}, 
+            {name:"G♭", oct_index: i}, {name:"G", oct_index: i}, 
+            {name:"A♭", oct_index: i}, {name:"A", oct_index: i}, 
+            {name:"B♭", oct_index: i}, {name:"B", oct_index: i}
+            );
         }
     }
+    
 
     function drawTonalRelations(){
-        for(i = 0; i < chords.length; i++){ 
-                sheet.selectAll(".harmonic-relations")
-                .data(chords[i])
-                .enter()
-                .append("rect")
-                .attr("class", "harmonic-relation")
-                .attr("y", (d, j) => {
-                    if(chords[i][j+1] !== undefined){
-                        return chords[i][j+1]["@default-y"]+bar_height/2;
-                    } else {
-                        return 1000;
+        sheet.selectAll(".harmonic-relations")
+            .data(notes)
+            .enter()
+            .append("rect")
+            .attr("class", "harmonic-relation")
+            .attr("x", d => d["@default-x"])
+            .attr("y", (d, i) => {
+                if(d["chord"]) {
+                    return d["@default-y"]+bar_height/2;
+                } else {
+                    return 1000;
+                }
+            })
+            .attr("height", (d, i) => {
+                if(d['chord'] && notes[i-1]["@default-y"]-d["@default-y"] > 0){
+                    return notes[i-1]["@default-y"]-d["@default-y"];
+                } else {
+                    return 0;
+                }
+            })
+            .attr("width", d => d["@default-dx"]-d["@default-x"])
+            .attr("fill", (d, i) => {
+                var color = 0;
+                if(d['chord']){
+                    return getInterval(notes[i].pitch, notes[i-1].pitch);
+                    /*var interval = notes[i-1]["@default-y"]-d["@default-y"];
+                    if(interval == 180 || interval == 150 || interval == 75 || interval == 105) { //perfect
+                        color =  "rgba(0,0,255,0.4)";
+                    }  else if (interval == 45 || interval == 60 || interval == 120 || interval == 135) { //imperfect
+                        color = "rgba(255,0,255,0.4)";
                     }
-                })
-                .attr("x", d => d["@default-x"])
-                .attr("width", d => d["@default-dx"]-d["@default-x"])
-                .attr("height", (d, j) => {
-                    if(chords[i][j+1] !== undefined){
-                        return d["@default-y"]-chords[i][j+1]["@default-y"];
-                    } else {
-                        return 0;
+                    else if (interval == 15 || interval == 30 || interval == 150 || interval == 165 || interval == 90) { //dissonant
+                        color = "rgba(255,0,0,0.5)"; 
                     }
-                }).attr("fill",  (d, j) => {
-                    var color = 0;
-                    if(chords[i][j+1] !== undefined){
-                        var interval = d["@default-y"]-chords[i][j+1]["@default-y"]
-                        if(interval == 180 || interval == 150 || interval == 75 ||  interval == 105) {
-                            color =  "rgba(0,0,255,0.3)";
-                        } else if (interval == 15 || interval == 30 || interval == 150 || interval == 165 || interval == 90) {
-                            color = "rgba(255,255,0,0.3)";
-                        } else if (interval == 45 || interval == 60 || interval == 120 || interval == 135) {
-                            color = "rgba(127,0,127,0.3)";
-                        }
-                        return color;
-                    return color;
-                    } else {
-                        return 0;
-                    } 
-                });   
-        }
+                    return color;*/
+                } else {
+                    return 0;
+                } 
+        });
     }
 
     function getOctaveSpan(){
@@ -220,49 +240,49 @@ p {
         sheet.style("width", sheet_width+"px");
     }
 
-    function drawYAxis(){
-        for (i = 0; i < octave_span; i++) {
-            sheet.selectAll("rect.staffs")
-            .data(pitch_classes)
-            .enter()
-            .append("rect")
-            .attr("class", "staff")
-            .attr("height", bar_height)
-            .attr("width", "100%")
-            .attr("y", (d, j) => sheet_height-((j+1)+(i*12))*bar_height)
-            .style("fill", "none")
-            .style("stroke", "rgba(0,0,0,0.5)")
-            .style("stroke-width", "0.1");
-        }
+    function drawStaffs(){
+        sheet.selectAll("rect.staffs")
+        .data(pitch_classes)
+        .enter()
+        .append("rect")
+        .attr("class", "staff")
+        .attr("height", bar_height)
+        .attr("width", "100%")
+        .attr("y", (d, j) => sheet_height-(j+1)*bar_height)
+        .style("fill", "none")
+        .style("stroke", "rgba(0,0,0,0.5)")
+        .style("stroke-width", "0.1");
     }
 
     function drawYLabels(){
-        for(i = 0; i < octave_span; i++) {
-            sheet_info.selectAll(".info")
-            .data(pitch_classes)
-            .enter()
-            .append("rect")
-            .attr("class", "pitch-class")
-            .attr("height", bar_height)
-            .attr("width", "100%")
-            .attr("y", (d, j) => { 
-                return sheet_height-(((j+1)+i*12)*bar_height)})
-            .attr("id", d => d.name)
-            .style("fill", "none")
-            .style("stroke", "rgba(0,0,0,0.5)")
-            .style("stroke-width", "1")
+        sheet_info.selectAll(".info")
+        .data(pitch_classes)
+        .enter()
+        .append("rect")
+        .attr("class", "pitch-class")
+        .attr("height", bar_height)
+        .attr("width", "100%")
+        .attr("y", (d, j) => { 
+           return sheet_height-(j+1)*bar_height
+        })
+        .attr("id", d => d.name)
+        .style("fill", "none")
+        .style("stroke", "rgba(0,0,0,0.5)")
+        .style("stroke-width", "1")
 
-            sheet_info.selectAll("text.y-labels")
-            .data(pitch_classes)
-            .enter()
-            .append("text")
-            .attr("class", "y-label")
-            .attr("x", 8 )
-            .attr("y", (d, j) => sheet_height-((j+i*12)*bar_height))
-            .attr("font-size", "10px")
-            .attr("font-family", "Arial")
-            .text(d => d.name);
-        } 
+        sheet_info.selectAll("text.y-labels")
+        .data(pitch_classes)
+        .enter()
+        .append("text")
+        .attr("class", "y-label")
+        .attr("x", 8 )
+        .attr("y", (d, j) => sheet_height-j*bar_height)
+        .attr("font-size", "10px")
+        .attr("font-family", "Arial")
+        .text(d => {
+            var d_octave = parseInt(lowest_octave)+parseInt(d.oct_index-1);
+            return d.name + " " +d_octave;
+        });
     }
 
     function drawMeasures() {
@@ -346,18 +366,17 @@ p {
         .style("fill", d => get_note_color(d))
         .style("stroke",  d => get_note_color(d))
         .style("stroke-width", "1");
-    
     }
 
     function get_note_y(d) {
         if (!d.pitch) {
             return 0;
         } else {
-            var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step);
+            var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave+1; //this is probably a stupid solution
+            var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step && pc.oct_index == d_relative_oct);
             var pitch_index = pitch_classes.indexOf(pitch_name)+1;
-            var y = (pitch_index+(d.pitch.octave*12-lowest_octave*12))*bar_height;
-            d["@default-y"] = sheet_height-y;
-            return sheet_height-y;
+            d["@default-y"] = sheet_height-pitch_index*bar_height;
+            return d["@default-y"];
         }
     }
 
@@ -365,14 +384,6 @@ p {
         var stroke_color = (d["pitch"]) ? "rgba(20, 20, 100, 0.5)" : "none";
         if(d['grace']){ stroke_color = "rgba(20, 20, 100, 0.5)";}
         return stroke_color;
-    }
-    
-    function get_note_r(d) {
-        if (!d["grace"]) {
-            return bar_height/6;
-        } else {
-            return bar_height/10;
-        }
     }
 
 </script>

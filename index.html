@@ -70,9 +70,11 @@ p {
 <input checked type="checkbox" id="toggleTonalRelations" name="toggleTonalRelations" value="1">
 <label for="toggleTonalRelations"> Show interval qualities</label>
 
-<input checked type="checkbox" id="toggleAggregateNotes" name="toggleAggregateNotes" value="1">
+<input type="checkbox" id="toggleAggregateNotes" name="toggleAggregateNotes" value="1">
 <label for="toggleAggregateNotes"> Aggregate notes</label>
 
+<input type="checkbox" id="toggleAggregateNotesOneOctave" name="toggleAggregateNotesOneOctave" value="1">
+<label for="toggleAggregateNotesOneOctave"> Aggregate notes in one octave</label>
 
 
 <div id="container">
@@ -398,10 +400,14 @@ p {
         .style("fill", d => get_note_color(d))
         .style("stroke",  d => get_note_color(d))
         .style("stroke-width", "1")
-        .on("mouseover", function (d, i) {   //needs work
+        .on("mouseover", function (d, i) {  
           d3.select(this).transition().duration('50')
-               .style('fill', 'red')
-        });
+            .style('fill', 'rgba(20, 20, 100, 0.2)')
+        })
+        .on("mouseleave", function (d, i) {  
+          d3.select(this).transition().duration('50')
+            .style('fill', 'rgba(20, 20, 100, 0.5)')
+        })
     }
 
     function get_note_y(d) {

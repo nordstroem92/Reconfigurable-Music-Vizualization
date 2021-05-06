@@ -6,7 +6,7 @@ function updateView(e){
         circle_of_fifths = [];
         c_major = [];
         sheet_height = 0;
-        bar_height = 15;
+        bar_height = 10;
         default_data;
         highest_octave = 0;
         lowest_octave = 10;

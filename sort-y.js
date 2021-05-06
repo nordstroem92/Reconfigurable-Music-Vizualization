@@ -2,6 +2,10 @@ document.getElementById("circle-of-fifths-sort").onclick = function(event) { //S
     sortYAxis_custom(circle_of_fifths_sort); 
 }
 
+document.getElementById("scale-degrees-only").onclick = function(event) { //Sort by circle of fifths
+    scaleDegreesOnly(); 
+}
+
 document.getElementById("voicing").onchange = function() { //Sort by circle of fifths
     var e = document.getElementById("voicing");
     var value = e.options[e.selectedIndex].value;
@@ -34,9 +38,10 @@ function adjustBeatUnits(){
     adjustMeasureRange(0);
 }
 
+
 function adjustBarHeight(){
     var slider_value = document.getElementById("bar-height-slider").value;
-    bar_height = slider_value;
+    bar_height = parseInt(slider_value);
     sheet_height = offset_top+octave_span*12*bar_height;
 
     sheet.transition().duration(500).style("height", sheet_height+"px");
@@ -53,18 +58,19 @@ function adjustBarHeight(){
     .attr("y2", d => sheet_height)
 
     sheet.selectAll(".note").transition().duration(500)
+    .attr("height", d=> bar_height)
     .attr("y", d => {
-        d["@default-y"] = get_note_y(d)+bar_height/4;
+        d["@default-y"] = get_note_y(d);
         return d["@default-y"]
     });
 
     sheet.selectAll(".harmonic-relation")
     .transition().duration(500)
     .attr("y", (d, i) => {
-        return  notes[i]["@default-y"];
+        return  notes[i]["@default-y"]+bar_height;
     }).attr("height", (d, i) => {
         if(d['chord']){
-            return notes[i-1]["@default-y"]-notes[i]["@default-y"];
+            return notes[i-1]["@default-y"]-notes[i]["@default-y"]-bar_height;
         } else {
             return 0; 
         }
@@ -79,8 +85,85 @@ function adjustBarHeight(){
     .attr("y", (d, i) => sheet_height-(i)*bar_height);
 }
 
+function scaleDegreesOnly(){
+    sheet_height = offset_top+scale_degrees_only.length*bar_height;
+    console.log(sheet_height);
+
+    sheet.transition().duration(500).style("height", sheet_height+"px");
+    d3.select("#sheet-info-container").transition().duration(500).style("height",  sheet_height+"px");
+    d3.select("#container").transition().duration(500).style("height",  sheet_height+"px");
+
+    var y_labels_before = sheet_info.selectAll(".y-label");
+    var pitch_classes_before = sheet_info.selectAll(".pitch-class");
+    var y_labels_before = sheet.selectAll(".staff");
+
+    sheet_info.selectAll(".y-label").attr("opacity", 0);
+    sheet_info.selectAll(".y-label")
+    .filter(d => {
+        for(var j = 0; j < scale_degrees_only.length; j++) {
+            if (scale_degrees_only[j].name == d.name) {
+                return d.name;
+            }
+        }
+    })
+    .attr("opacity", 1)
+    .transition().duration(500)
+    .attr("y", (d, i) => sheet_height-i*bar_height);
+
+    sheet_info.selectAll(".pitch-class").attr("opacity", 0);
+    sheet_info.selectAll(".pitch-class")
+    .filter(d => {
+        for(var j = 0; j < scale_degrees_only.length; j++) {
+            if (scale_degrees_only[j].name == d.name) {
+                return d.name;
+            }
+        }
+    })
+    .attr("opacity", 1)
+    .transition().duration(500)
+    .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
+
+    sheet.selectAll(".staff").attr("opacity", 0);
+    sheet.selectAll(".staff")
+    .filter(d => {
+        for(var j = 0; j < scale_degrees_only.length; j++) {
+            if (scale_degrees_only[j].name == d.name) {
+                return d.name;
+            }
+        }
+    })
+    .attr("opacity", 1)
+    .transition().duration(500)
+    .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
+
+    sheet.selectAll(".note").style("opacity", 0);
+    sheet.selectAll(".note")
+    .filter(d => {
+        for(var j = 0; j < scale_degrees_only.length; j++) {
+            if (scale_degrees_only[j].name == d.pitch.step) {
+                return d.pitch.step;
+            }
+        }
+    })
+    .style("opacity", 1)
+    .transition().duration(500)
+    .attr("y", (d) => {
+        if (!d.pitch) { 
+            return 0;
+        } else {
+            var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave+1; //this is probably a stupid solution
+            var pitch_name = scale_degrees_only.find(pc => pc.name == d.pitch.step && pc.oct_index == d_relative_oct);
+            var pitch_index = scale_degrees_only.indexOf(pitch_name)+1;
+            d["@default-y"] = sheet_height-pitch_index*bar_height;
+            return d["@default-y"];
+        }
+    });
+
+    sheet.selectAll(".harmonic-relation").style("opacity", 0);
+}
+
 function adjustMeasureRange(transition_duration){
-    var slider_value = document.getElementById("measure-slider").value;
+    slider_value = document.getElementById("measure-slider").value;
     var new_scale_of_measure = scale_of_measure*slider_value;
 
     var sheet_width = data_part.measure.length*new_scale_of_measure;
@@ -89,7 +172,7 @@ function adjustMeasureRange(transition_duration){
     sheet.selectAll(".note")
     .transition().duration(transition_duration)
     .attr("x", d => (d['@default-x']*slider_value))
-    .attr("width", d => ((scale_of_measure/16)*parseInt(d["duration"])*slider_value)-beat_offset);
+    .attr("width", d => ((scale_of_measure/16)*parseInt(d["duration"])*slider_value));
 
     sheet.selectAll(".measure")
     .transition().duration(transition_duration)
@@ -103,7 +186,7 @@ function adjustMeasureRange(transition_duration){
     sheet.selectAll(".harmonic-relation")
     .transition().duration(transition_duration)
     .attr("x", d => d['@default-x']*slider_value)
-    .attr("width", d => ((scale_of_measure/16)*parseInt(d["duration"])*slider_value)-beat_offset);
+    .attr("width", d => ((scale_of_measure/16)*parseInt(d["duration"])*slider_value));
     
     var segments = document.getElementById("beat-unit-slider").value;
     d3.selectAll(".beat")
@@ -145,7 +228,7 @@ function sortYAxis_custom(sorting_pattern) {
                 var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave+1; //this is probably a stupid solution
                 var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step && pc.oct_index == d_relative_oct);
                 var pitch_index = pitch_classes.indexOf(pitch_name)+1;
-                d["@default-y"] = sheet_height-pitch_index*bar_height+bar_height/4;
+                d["@default-y"] = sheet_height-pitch_index*bar_height;
                 return d["@default-y"];
             }
     });
@@ -153,11 +236,11 @@ function sortYAxis_custom(sorting_pattern) {
     sheet.selectAll(".harmonic-relation")
         .transition().duration(500)
         .attr("y", (d, i) => {
-            return  notes[i]["@default-y"];
+            return  notes[i]["@default-y"]+bar_height;
         }).attr("height", (d, i) => {
             if(d['chord']){
                 if(notes[i-1]["@default-y"] > notes[i]["@default-y"]) {
-                    return notes[i-1]["@default-y"]-notes[i]["@default-y"];
+                    return notes[i-1]["@default-y"]-notes[i]["@default-y"]-bar_height;
                 } else {
                     return 0;
                 }
@@ -176,7 +259,6 @@ function sortYAxis_custom(sorting_pattern) {
 function getInterval(a, b){
     var interval = immutable_pitch_classes.indexOf(a.step) - immutable_pitch_classes.indexOf(b.step)
     if (interval < 0) { interval = 12+interval }
-
     if (interval == 0 || interval == 12 || interval == 7 || interval == 5) { //Perfect: p1 p8 p5 p4
         return "rgba(0,0,255,0.4)";
     } else if (interval == 3 || interval == 4 || interval == 8 || interval == 9) { //Imperfect: M3 m3 M6 m6

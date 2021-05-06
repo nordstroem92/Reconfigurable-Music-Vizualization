@@ -3,8 +3,8 @@
 <head>
 <style>
 ::-webkit-scrollbar {
-  height: 5px;
-  width: 5px;
+  height: 8px;
+  width: 8px;
 }
 
 /* Track */
@@ -35,7 +35,7 @@ p {
     overflow-y: overlay;
     overflow-y: hidden; 
     display: inline-block;
-    height: 100%;
+    height: 103%;
 }
 #sheet-info {
     width: 30px;
@@ -46,6 +46,23 @@ p {
 }
 #container{
     vertical-align: top;
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+}
+
+input {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
 }
 
 </style>
@@ -56,16 +73,17 @@ p {
 <select name="voicing" id="voicing">
   </select>
 <button id="c-major-sort">c-major</button>
-<button id="circle-of-fifths-sort">circle-of-fifths sort</button><br><br>
+<button id="circle-of-fifths-sort">circle-of-fifths sort</button>
+<button id="scale-degrees-only">Scale degrees only</button><br><br>
 
 <label for="points">x-axis:</label>
-<input id="measure-slider" type="range" name="points" min="0.5" max="1.5" step="0.1">
+<input id="measure-slider" type="range" name="points" min="0.25" max="1.5" step="0.1">
 
 <label for="points">beat units:</label>
 <input id="beat-unit-slider" type="range" name="points" value="2" min="0" max="8" step="2">
 
 <label for="points">bar-height slider</label>
-<input id="bar-height-slider" type="range" name="points" min="10" max="20">
+<input id="bar-height-slider" type="range" name="points" min="10" max="15" value="10">
 
 <input checked type="checkbox" id="toggleTonalRelations" name="toggleTonalRelations" value="1">
 <label for="toggleTonalRelations"> Show interval qualities</label>
@@ -75,6 +93,9 @@ p {
 
 <input type="checkbox" id="toggleAggregateNotesOneOctave" name="toggleAggregateNotesOneOctave" value="1">
 <label for="toggleAggregateNotesOneOctave"> Aggregate notes in one octave</label>
+
+<input type="checkbox" id="toggleAggregateIntervals" name="toggleAggregateIntervals" value="1">
+<label for="toggleAggregateIntervals"> Aggregate intervals</label>
 
 
 <div id="container">
@@ -100,22 +121,25 @@ p {
     const immutable_pitch_classes = ["C", "D♭", "D","E♭", "E","F", "G♭","G", "A♭", "A", "B♭","B"];
     const scale_of_measure = 100;
     const beat_units = scale_of_measure/16;
-    const beat_offset = scale_of_measure/50;
     const sheet_info = d3.select("#sheet-info");
     const sheet = d3.select("#sheet");
     const offset_top = 30;
     
     var pitch_classes = [];
+    const interval_classes = [{halfstep:1, interval_name: "m2"}, {halfstep:2, interval_name: "M2"}, {halfstep:3, interval_name: "m3"}, {halfstep:4, interval_name: "M3"}, {halfstep:5, interval_name: "P4"}, {halfstep:6, interval_name: "tt"}, {halfstep:7, interval_name: "P5"}, {halfstep:8, interval_name: "m6"}, {halfstep:9, interval_name: "M6"}, {halfstep:10, interval_name: "m7"}, {halfstep:11, interval_name: "M7"}, {halfstep:12, interval_name: "P8"}];
     var circle_of_fifths = [];
     var c_major = [];
+    var scale_degrees_only = []
     var sheet_height = 0;
-    var bar_height = 15;
+    var bar_height = 10;
     var default_data;
     var highest_octave = 0;
     var lowest_octave = 10;
     var octave_span;
     var notes = [];
     var chords;
+
+    slider_value = document.getElementById("measure-slider").value;
 
     d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/master/MusicJSON/New_Light.json").then(function(data) {
         default_data = data;
@@ -182,15 +206,21 @@ p {
             {name:"A♭", oct_index: i}, {name:"A", oct_index: i}, 
             {name:"B♭", oct_index: i}, {name:"B", oct_index: i}
             );
+
+            scale_degrees_only.push(
+            {name:"G", oct_index: i}, {name:"A", oct_index: i}, 
+            {name:"B", oct_index: i}, {name:"C", oct_index: i}, 
+            {name:"D", oct_index: i}, {name:"E", oct_index: i}, 
+            {name:"G♭", oct_index: i});
         }
     }
     
     function toggleTonalRelations() {
         var check = document.getElementById("toggleTonalRelations");
         if(!check.checked) {
-            sheet.selectAll(".harmonic-relation").remove();
+            sheet.selectAll(".harmonic-relation").transition().duration(500).style("opacity", "0");
         } else {
-            drawTonalRelations()
+            sheet.selectAll(".harmonic-relation").transition().duration(500).style("opacity", "1");
         }
     }
 
@@ -203,14 +233,14 @@ p {
             .attr("x", d => d["@default-x"])
             .attr("y", (d, i) => {
                 if(d["chord"]) {
-                    return d["@default-y"]+bar_height/2;
+                    return d["@default-y"]+bar_height;
                 } else {
-                    return 1000;
+                    return 100;
                 }
             })
             .attr("height", (d, i) => {
                 if(d['chord'] && notes[i-1]["@default-y"]-d["@default-y"] > 0){
-                    return notes[i-1]["@default-y"]-d["@default-y"];
+                    return notes[i-1]["@default-y"]-d["@default-y"]-bar_height;
                 } else {
                     return 0;
                 }
@@ -244,8 +274,8 @@ p {
                     sum_previous_durations += (beat_units)*parseInt(notes[i]["duration"]); 
                     notes[i]['@default-dx'] = sum_previous_durations;
                 } else if(notes[i]["grace"]){ //not grace notes[i]s
-                    notes[i]['@default-x'] = sum_previous_durations-beat_offset*2;
-                    notes[i]['@default-dx'] = sum_previous_durations-beat_offset*2;
+                    notes[i]['@default-x'] = sum_previous_durations;
+                    notes[i]['@default-dx'] = sum_previous_durations;
                 } else if(notes[i]['chord']) {
                     notes[i]['@default-dx'] = sum_previous_durations; 
                     notes[i]['@default-x'] = sum_previous_durations - (beat_units)*parseInt(notes[i]["duration"]); 
@@ -359,7 +389,7 @@ p {
         .append("text")
         .attr("class", "harmony") 
         .attr("x", (d, i) => (i-1)*scale_of_measure)
-        .attr("y", 20 )
+        .attr("y", 20)
         .attr("font-size", "14px")
         .attr("font-family", "Arial")
         .text(d => {
@@ -387,16 +417,16 @@ p {
         .enter()
         .append("rect")
         .attr("class", "note")
-        .attr("height", bar_height/2)
+        .attr("height", bar_height)
         .attr("width",  (d, i) => {
             if(!d['grace']) {
-                return (beat_units)*parseInt(d["duration"])-beat_offset;
+                return (beat_units)*parseInt(d["duration"]);
             } else {
                 return 0;
             }
         }) 
         .attr("x", d => d['@default-x'])
-        .attr("y", d => get_note_y(d)+bar_height/4)
+        .attr("y", d => get_note_y(d))
         .style("fill", d => get_note_color(d))
         .style("stroke",  d => get_note_color(d))
         .style("stroke-width", "1")
@@ -406,7 +436,7 @@ p {
         })
         .on("mouseleave", function (d, i) {  
           d3.select(this).transition().duration('50')
-            .style('fill', 'rgba(20, 20, 100, 0.5)')
+            .style('fill', 'rgba(0, 0, 0, 0.6)')
         })
     }
 
@@ -423,8 +453,8 @@ p {
     }
 
     function get_note_color(d){
-        var stroke_color = (d["pitch"]) ? "rgba(20, 20, 100, 0.5)" : "none";
-        if(d['grace']){ stroke_color = "rgba(20, 20, 100, 0.5)";}
+        var stroke_color = (d["pitch"]) ? "rgba(0, 0, 0, 0.6)" : "none";
+        if(d['grace']){ stroke_color = "rgba(0, 0, 0, 0.6)";}
         return stroke_color;
     }
 

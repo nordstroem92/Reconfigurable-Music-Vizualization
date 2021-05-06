@@ -7,12 +7,110 @@ document.getElementById("toggleAggregateNotesOneOctave").onclick = function() { 
     toggleAggregateNotesOneOctave(); 
 }
 
+document.getElementById("toggleAggregateIntervals").onclick = function() { //Sort by circle of fifths
+    toggleAggregateIntervals(); 
+}
+
+function toggleAggregateIntervals() {
+    var check = document.getElementById("toggleAggregateIntervals");
+    if(check.checked) {
+        intervalLineChart();
+    } else {
+        revertIntervalLineChart();
+    }
+}
+
+function revertIntervalLineChart() {
+    sheet.selectAll(".note").transition().duration(500).attr("opacity", 1)
+    sheet.selectAll(".staff").transition().duration(500).attr("opacity", 1)
+    sheet.selectAll(".harmony").transition().duration(500).attr("opacity", 1)
+    sheet_info.selectAll("rect").transition().duration(500).attr("opacity", 1)
+    sheet_info.selectAll("text").transition().duration(500).attr("opacity", 1)
+    sheet_info.selectAll(".interval-name").remove();
+
+    sheet.selectAll(".harmonic-relation")
+    .transition().duration(500)
+    .attr("x", d => d['@default-x']*slider_value)
+    .attr("y", (d, i) => {
+        return  notes[i]["@default-y"];
+    }).attr("height", (d, i) => {
+        if(d['chord']){
+            return notes[i-1]["@default-y"]-notes[i]["@default-y"];
+        } else {
+            return 0; 
+        }
+    });
+}
+
+function intervalLineChart() {
+    sheet.selectAll(".note").transition().duration(500).attr("opacity", 0)
+    sheet.selectAll(".staff").transition().duration(500).attr("opacity", 0)
+    sheet.selectAll(".harmony").transition().duration(500).attr("opacity", 0)
+    sheet_info.selectAll("rect").transition().duration(500).attr("opacity", 0)
+    sheet_info.selectAll("text").transition().duration(500).attr("opacity", 0)
+
+    var default_bar_height = 15;
+
+    sheet.transition().duration(500).style("height", 12*3*default_bar_height+"px");
+    d3.select("#sheet-info-container").transition().duration(500).style("height",  12*3*default_bar_height+"px");
+    d3.select("#container").transition().duration(500).style("height",  12*3*default_bar_height+"px");
+
+    for (i = 0; i < interval_classes.length; i++){
+        interval_classes[i].sum_x = 0;
+    }
+
+    sheet.selectAll(".harmonic-relation").transition().duration(500)
+    .attr("x", (d, i) => {
+        if(d['chord']) {
+            var interval = immutable_pitch_classes.indexOf(notes[i-1].pitch.step)-immutable_pitch_classes.indexOf(d.pitch.step);
+            if(interval < 0) {
+                interval = 12 + interval;
+            }
+            var x = interval_classes[interval].sum_x
+            interval_classes[interval].sum_x += (beat_units)*parseInt(d["duration"])*slider_value;
+            return x;
+        } else {
+            return 0;
+        }
+    })
+
+    .attr("height", d => {
+        if(d['chord']) { 
+            return default_bar_height;  
+        } else {
+            return 0;
+        }
+    })
+
+    .attr("y", (d, i) => {
+        if(d['chord']) {       
+            var interval = immutable_pitch_classes.indexOf(notes[i-1].pitch.step)-immutable_pitch_classes.indexOf(d.pitch.step);
+            if(interval < 0) {
+                interval = 12 + interval;
+            }
+            return (interval*3*default_bar_height)+default_bar_height;
+        } else {
+            return -10;
+        }
+    });
+
+    sheet_info.selectAll("interval-names")
+    .data(interval_classes)
+    .enter()
+    .append("text")
+    .attr("class", "interval-name") 
+    .text((d) => d.interval_name)
+    .attr("y", (d, i) => {
+        return sheet_height - (i+1)*3*default_bar_height;
+    });
+}
+
 function toggleAggregateNotes() {
     var check = document.getElementById("toggleAggregateNotes");
     if(check.checked) {
         makeLineChart();
     } else {
-        adjustMeasureRange(500);
+        restoreLayout();
     }
 }
 
@@ -25,11 +123,8 @@ function toggleAggregateNotesOneOctave() {
     }
 }
 
-
-
 function makeLineChart() {
-    var slider_value = document.getElementById("measure-slider").value;
-    sheet.selectAll(".harmonic-relation").remove();
+    sheet.selectAll(".harmonic-relation").transition().duration(500).style("opacity", "0");
     for (i = 0; i < pitch_classes.length; i++){
         pitch_classes[i].sum_x = 0;
     }
@@ -46,8 +141,8 @@ function makeLineChart() {
 }
 
 function makeLineChartOneOctave() {
-    var slider_value = document.getElementById("measure-slider").value;
-    sheet.selectAll(".harmonic-relation").remove();
+    sheet.selectAll(".harmonic-relation").transition().duration(500).style("opacity", "0");
+    
     for (i = 0; i < pitch_classes.length; i++){
         pitch_classes[i].sum_x = 0;
     }
@@ -63,14 +158,15 @@ function makeLineChartOneOctave() {
     .attr("y", d => {  
         var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step);
         var pitch_index = pitch_classes.indexOf(pitch_name);
-        return sheet_height-(pitch_index+1)*bar_height+bar_height/4;
+        return sheet_height-(pitch_index+1)*bar_height;
     })
 }
 
 function restoreLayout() {
-    var slider_value = document.getElementById("measure-slider").value;
+    sheet.selectAll(".harmonic-relation").transition().duration(500).style("opacity", "1");
+
     sheet.selectAll(".note").transition().duration(500)
     .attr("x", d => (d['@default-x']*slider_value))
     .attr("y", d => d["@default-y"])
-    .attr("width", d =>  (scale_of_measure/16)*parseInt(d["duration"])*slider_value)-beat_offset;
+    .attr("width", d =>  (scale_of_measure/16)*parseInt(d["duration"])*slider_value);
 }

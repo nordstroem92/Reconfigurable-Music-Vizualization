@@ -32,10 +32,10 @@ function revertIntervalLineChart() {
     .transition().duration(500)
     .attr("x", d => d['@default-x']*slider_value)
     .attr("y", (d, i) => {
-        return  notes[i]["@default-y"];
+        return  notes[i]["@default-y"]+bar_height;
     }).attr("height", (d, i) => {
         if(d['chord']){
-            return notes[i-1]["@default-y"]-notes[i]["@default-y"];
+            return notes[i-1]["@default-y"]-notes[i]["@default-y"]-bar_height;
         } else {
             return 0; 
         }
@@ -106,18 +106,22 @@ function intervalLineChart() {
 }
 
 function toggleAggregateNotes() {
-    var check = document.getElementById("toggleAggregateNotes");
-    if(check.checked) {
+    var aggr_check = document.getElementById("toggleAggregateNotes");
+    var aggr_octave_check = document.getElementById("toggleAggregateNotesOneOctave");
+    if(aggr_check.checked) {
         makeLineChart();
+        aggr_octave_check.checked = false;
     } else {
         restoreLayout();
     }
 }
 
 function toggleAggregateNotesOneOctave() {
-    var check = document.getElementById("toggleAggregateNotesOneOctave");
-    if(check.checked) {
+    var aggr_check = document.getElementById("toggleAggregateNotes");
+    var aggr_octave_check = document.getElementById("toggleAggregateNotesOneOctave");
+    if(aggr_octave_check.checked) {
         makeLineChartOneOctave();
+        aggr_check.checked = false;
     } else {
         restoreLayout();
     }
@@ -138,8 +142,9 @@ function makeLineChart() {
         pitch_classes[pitch_index].sum_x += (beat_units)*parseInt(d["duration"])*slider_value;
         return x;
     })
+    .attr("y", d =>  get_note_y(d))
+    .attr("width", d => scale_of_measure/16*parseInt(d["duration"])*slider_value);
 }
-
 function makeLineChartOneOctave() {
     sheet.selectAll(".harmonic-relation").transition().duration(500).style("opacity", "0");
     
@@ -160,13 +165,18 @@ function makeLineChartOneOctave() {
         var pitch_index = pitch_classes.indexOf(pitch_name);
         return sheet_height-(pitch_index+1)*bar_height;
     })
+    .attr("width", d => scale_of_measure/16*parseInt(d["duration"])*slider_value);
 }
 
 function restoreLayout() {
-    sheet.selectAll(".harmonic-relation").transition().duration(500).style("opacity", "1");
-
     sheet.selectAll(".note").transition().duration(500)
     .attr("x", d => (d['@default-x']*slider_value))
     .attr("y", d => d["@default-y"])
     .attr("width", d =>  (scale_of_measure/16)*parseInt(d["duration"])*slider_value);
+
+    sheet.selectAll(".harmonic-relation")
+    .attr("x", d => d['@default-x']*slider_value)
+    .attr("width", d => ((scale_of_measure/16)*parseInt(d["duration"])*slider_value))
+    .transition().duration(500)
+    .style("opacity", "1");
 }

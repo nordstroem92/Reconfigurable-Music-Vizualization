@@ -77,7 +77,7 @@ input {
 <button id="scale-degrees-only">Scale degrees only</button><br><br>
 
 <label for="points">x-axis:</label>
-<input id="measure-slider" type="range" name="points" min="0.25" max="1.5" step="0.1">
+<input id="measure-slider" type="range" name="points" min="0.3" max="1.5" step="0.1" value=1>
 
 <label for="points">beat units:</label>
 <input id="beat-unit-slider" type="range" name="points" value="2" min="0" max="8" step="2">
@@ -116,6 +116,7 @@ input {
 <script src="sort-y.js"></script>
 <script src="update-view.js"></script>
 <script src="computations.js"></script>
+<script src="draw.js"></script>
 
 <script>
     const immutable_pitch_classes = ["C", "D♭", "D","E♭", "E","F", "G♭","G", "A♭", "A", "B♭","B"];
@@ -224,35 +225,44 @@ input {
         }
     }
 
-    function drawTonalRelations(){
-        sheet.selectAll(".harmonic-relations")
-            .data(notes)
-            .enter()
-            .append("rect")
-            .attr("class", "harmonic-relation")
-            .attr("x", d => d["@default-x"])
-            .attr("y", (d, i) => {
-                if(d["chord"]) {
-                    return d["@default-y"]+bar_height;
-                } else {
-                    return 100;
-                }
-            })
-            .attr("height", (d, i) => {
-                if(d['chord'] && notes[i-1]["@default-y"]-d["@default-y"] > 0){
-                    return notes[i-1]["@default-y"]-d["@default-y"]-bar_height;
-                } else {
-                    return 0;
-                }
-            })
-            .attr("width", d => d["@default-dx"]-d["@default-x"])
-            .attr("fill", (d, i) => {
-                if(d['chord']){
-                    return getInterval(notes[i].pitch, notes[i-1].pitch);
-                } else {
-                    return 0;
-                } 
-        });
+    function getIntervalY(d){
+        if(d["chord"]) {
+            return d["@default-y"]+bar_height;
+        } else {
+            return 100;
+        }
+    }
+
+    function getIntervalHeight(d, i){
+        if(d['chord'] && notes[i-1]["@default-y"]-d["@default-y"] > 0){
+            return notes[i-1]["@default-y"]-d["@default-y"]-bar_height;
+        } else {
+            return 0;
+        }
+    }
+
+    function getIntervalWidth(d){
+        return d["@default-dx"]-d["@default-x"];
+    }
+
+    function getIntervalFill(d, i){
+        if(d['chord']){
+            var interval = immutable_pitch_classes.indexOf(d.pitch.step) - immutable_pitch_classes.indexOf(notes[i-1].pitch.step)
+            if (interval < 0) { interval = 12+interval }
+            if (interval == 0 || interval == 12 || interval == 7 || interval == 5) { //Perfect: p1 p8 p5 p4
+                return "rgba(0,0,255,0.4)";
+            } else if (interval == 3 || interval == 4 || interval == 8 || interval == 9) { //Imperfect: M3 m3 M6 m6
+                return "rgba(255,0,255,0.4)";
+            } else if (interval == 1 || interval == 2 || interval == 10 || interval == 11 || interval == 6) { //Dissonant: M2 m2 M7 m7 d5 A4
+                return "rgba(255,0,0,0.5)"; 
+            }
+        } else {
+            return 0;
+        }
+    }
+
+    function getStaffOrLabelHeight(i){
+        return sheet_height-(i+1)*bar_height;
     }
 
     function getOctaveSpan(){
@@ -296,148 +306,6 @@ input {
 
         var sheet_width = data_part.measure.length*scale_of_measure;
         sheet.style("width", sheet_width+"px");
-    }
-
-    function drawStaffs(){
-        sheet.selectAll("rect.staffs")
-        .data(pitch_classes)
-        .enter()
-        .append("rect")
-        .attr("class", "staff")
-        .attr("height", bar_height)
-        .attr("width", "100%")
-        .attr("y", (d, j) => sheet_height-(j+1)*bar_height)
-        .style("fill", "none")
-        .style("stroke", "rgba(0,0,0,0.5)")
-        .style("stroke-width", "0.1");
-    }
-
-    function drawYLabels(){
-        sheet_info.selectAll(".info")
-        .data(pitch_classes)
-        .enter()
-        .append("rect")
-        .attr("class", "pitch-class")
-        .attr("height", bar_height)
-        .attr("width", "100%")
-        .attr("y", (d, j) => { 
-           return sheet_height-(j+1)*bar_height
-        })
-        .attr("id", d => d.name)
-        .style("fill", "none")
-        .style("stroke", "rgba(0,0,0,0.5)")
-        .style("stroke-width", "1")
-
-        sheet_info.selectAll("text.y-labels")
-        .data(pitch_classes)
-        .enter()
-        .append("text")
-        .attr("class", "y-label")
-        .attr("x", 8 )
-        .attr("y", (d, j) => sheet_height-j*bar_height)
-        .attr("font-size", "10px")
-        .attr("font-family", "Arial")
-        .text(d => {
-            var d_octave = parseInt(lowest_octave)+parseInt(d.oct_index-1);
-            return d.name + " " +d_octave;
-        });
-    }
-
-    function drawMeasures() {
-        sheet.selectAll("line.measure")
-            .data(data_part.measure)
-            .enter()
-            .append("line")
-            .attr("class", "measure")
-            .attr("x1", d => parseInt(d["@number"])*scale_of_measure)
-            .attr("y1", d => offset_top)
-            .attr("x2", d => parseInt(d["@number"])*scale_of_measure)
-            .attr("y2", d => sheet_height)
-            .style("stroke", "black")
-            .style("stroke-width", 1);
-    }
-    function drawBeats(s) {
-        var segments = s; 
-        var sum_of_measures = data_part.measure.length;
-
-        sheet.selectAll("line.beat").attr("class", "beat").remove();
-        for (i = 0; i < segments; i++) {
-            sheet.selectAll("line.beats")
-            .data(data_part.measure)
-            .enter()
-            .append("line")
-            .attr("class", "beat")  
-            .attr("x1", (d, j) => { 
-                var length = (scale_of_measure)/segments;
-                return (j+(i*sum_of_measures))*length;
-            })
-            .attr("y1", d => offset_top)
-            .attr("x2", (d, j) => {
-                var length = (scale_of_measure)/segments;
-                return (j+(i*sum_of_measures))*length;
-            })
-            .attr("y2", d => sheet_height)
-            .style("stroke", "rgba(100,100,100, 0.3)")
-            .style("stroke-width", 1);
-        }
-    }
-
-    function drawChordLabels(){;
-        sheet.selectAll("text")
-        .data(data_part.measure)
-        .enter()
-        .append("text")
-        .attr("class", "harmony") 
-        .attr("x", (d, i) => (i-1)*scale_of_measure)
-        .attr("y", 20)
-        .attr("font-size", "14px")
-        .attr("font-family", "Arial")
-        .text(d => {
-            if (d['harmony']) {
-                if(d['harmony']['function']) {
-                    return d['harmony']['function'];
-                } else if (Array.isArray(d['harmony'])) {
-                    var text = ""; 
-                    for (i = 0; i < d['harmony'].length; i++) {
-                        text += d['harmony'][i]['function']+" ";
-                    }
-                    return text;
-                }
-            } else {
-                return "";
-            }
-        });
-
-    }
-
-    function drawNotes(){
-        var sum_previous_durations = 0;
-        sheet.selectAll(".rect")
-        .data(notes)
-        .enter()
-        .append("rect")
-        .attr("class", "note")
-        .attr("height", bar_height)
-        .attr("width",  (d, i) => {
-            if(!d['grace']) {
-                return (beat_units)*parseInt(d["duration"]);
-            } else {
-                return 0;
-            }
-        }) 
-        .attr("x", d => d['@default-x'])
-        .attr("y", d => get_note_y(d))
-        .style("fill", d => get_note_color(d))
-        .style("stroke",  d => get_note_color(d))
-        .style("stroke-width", "1")
-        .on("mouseover", function (d, i) {  
-          d3.select(this).transition().duration('50')
-            .style('fill', 'rgba(20, 20, 100, 0.2)')
-        })
-        .on("mouseleave", function (d, i) {  
-          d3.select(this).transition().duration('50')
-            .style('fill', 'rgba(0, 0, 0, 0.6)')
-        })
     }
 
     function get_note_y(d) {

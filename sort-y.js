@@ -164,9 +164,8 @@ function scaleDegreesOnly(){
 
 function adjustMeasureRange(transition_duration){
     slider_value = document.getElementById("measure-slider").value;
-    var new_scale_of_measure = scale_of_measure*slider_value;
 
-    var sheet_width = data_part.measure.length*new_scale_of_measure;
+    var sheet_width = data_part.measure.length*scale_of_measure*slider_value;
     sheet.style("width", sheet_width+"px");
 
     sheet.selectAll(".note")
@@ -176,12 +175,12 @@ function adjustMeasureRange(transition_duration){
 
     sheet.selectAll(".measure")
     .transition().duration(transition_duration)
-    .attr("x1", d => parseInt(d["@number"])*new_scale_of_measure)
-    .attr("x2", d => parseInt(d["@number"])*new_scale_of_measure);
+    .attr("x1", d => parseInt(d["@number"])*scale_of_measure*slider_value)
+    .attr("x2", d => parseInt(d["@number"])*scale_of_measure*slider_value);
 
     sheet.selectAll(".harmony")
     .transition().duration(transition_duration)
-    .attr("x", (d , i) => (i-1)*new_scale_of_measure);
+    .attr("x", (d , i) => (i-1)*scale_of_measure*slider_value);
 
     sheet.selectAll(".harmonic-relation")
     .transition().duration(transition_duration)
@@ -191,14 +190,23 @@ function adjustMeasureRange(transition_duration){
     var segments = document.getElementById("beat-unit-slider").value;
     d3.selectAll(".beat")
     .transition().duration(transition_duration)
-    .attr("x1", (d, j) => {
-        var length = (new_scale_of_measure)/segments;
-        return j*length;
+    .attr("x1", (d, i) => {
+        var length = (scale_of_measure*slider_value)/segments;
+        return i*length;
     })
-    .attr("x2", (d, j) => {
-        var length = (new_scale_of_measure)/segments;
-        return j*length;
+    .attr("x2", (d, i) => {
+        var length = (scale_of_measure*slider_value)/segments;
+        return i*length;
     });
+
+    var aggr_check = document.getElementById("toggleAggregateNotes");
+    var aggr_octave_check = document.getElementById("toggleAggregateNotesOneOctave");
+
+    if(aggr_check.checked) {
+        makeLineChart();
+    } else if(aggr_octave_check.checked) {
+        makeLineChartOneOctave();
+    }
 }
 
 function sortYAxis_custom(sorting_pattern) { 
@@ -210,62 +218,24 @@ function sortYAxis_custom(sorting_pattern) {
     sheet_info.selectAll(".pitch-class")
         .sort((a,b) => sorting_pattern(a, b))
         .transition().duration(500)
-        .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
+        .attr("y", (d, i) => getStaffOrLabelHeight(i));
     
     sheet.selectAll(".staff")
         .sort((a,b) => sorting_pattern(a, b))
         .transition().duration(500)
-        .attr("y", (d, i) => sheet_height-(i+1)*bar_height);
+        .attr("y", (d, i) =>  getStaffOrLabelHeight(i));
 
     pitch_classes.sort((a,b) => sorting_pattern(a, b))
     
     sheet.selectAll(".note")
         .transition().duration(500)
-        .attr("y", (d) => {
-            if (!d.pitch) { 
-                return 0;
-            } else {
-                var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave+1; //this is probably a stupid solution
-                var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step && pc.oct_index == d_relative_oct);
-                var pitch_index = pitch_classes.indexOf(pitch_name)+1;
-                d["@default-y"] = sheet_height-pitch_index*bar_height;
-                return d["@default-y"];
-            }
-    });
+        .attr("y", d => get_note_y(d));
     
     sheet.selectAll(".harmonic-relation")
         .transition().duration(500)
-        .attr("y", (d, i) => {
-            return  notes[i]["@default-y"]+bar_height;
-        }).attr("height", (d, i) => {
-            if(d['chord']){
-                if(notes[i-1]["@default-y"] > notes[i]["@default-y"]) {
-                    return notes[i-1]["@default-y"]-notes[i]["@default-y"]-bar_height;
-                } else {
-                    return 0;
-                }
-            } else {
-                return 0;
-            }
-        }).attr("fill", (d, i) => {
-            if(d['chord']){
-                return getInterval(notes[i].pitch, notes[i-1].pitch);
-            } else {
-                return 0;
-            } 
-        });
-}
-
-function getInterval(a, b){
-    var interval = immutable_pitch_classes.indexOf(a.step) - immutable_pitch_classes.indexOf(b.step)
-    if (interval < 0) { interval = 12+interval }
-    if (interval == 0 || interval == 12 || interval == 7 || interval == 5) { //Perfect: p1 p8 p5 p4
-        return "rgba(0,0,255,0.4)";
-    } else if (interval == 3 || interval == 4 || interval == 8 || interval == 9) { //Imperfect: M3 m3 M6 m6
-        return "rgba(255,0,255,0.4)";
-    } else if (interval == 1 || interval == 2 || interval == 10 || interval == 11 || interval == 6) { //Dissonant: M2 m2 M7 m7 d5 A4
-        return "rgba(255,0,0,0.5)"; 
-    }
+        .attr("y", d => getIntervalY(d))
+        .attr("height", (d, i) => getIntervalHeight(d, i))
+        .attr("fill", (d, i) => getIntervalFill(d, i));
 }
 
 function circle_of_fifths_sort(a ,b){

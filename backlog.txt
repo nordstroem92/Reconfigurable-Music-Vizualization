@@ -1,3 +1,3 @@
 [] fix chord notation positioning
-[] fix coloring on sort - and in general
-[] Place notes in front of harmonyic realtions
+[] fix revese scale degrees only
+[] fix aggregate intervals

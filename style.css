@@ -1,0 +1,62 @@
+::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+  
+/* Track */
+::-webkit-scrollbar-track {
+background: lightgrey; 
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+background: rgb(23,115,232); 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+background: rgb(23,115,232); 
+}
+p {
+    font-family: "Helvetica";
+}
+#sheet-info-container {
+    width: 30px;
+    display: inline-block;
+    vertical-align: top;
+    height: 100%;
+}
+#sheet-container {
+    width: 97%;
+    overflow-y: overlay;
+    overflow-y: hidden; 
+    display: inline-block;
+    height: 103%;
+}
+#sheet-info {
+    width: 30px;
+    height: 100%;
+}
+#sheet {
+    height: 100%;
+}
+#container{
+    vertical-align: top;
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+        -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                supported by Chrome, Edge, Opera and Firefox */
+}
+
+input {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+        -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                supported by Chrome, Edge, Opera and Firefox */
+}

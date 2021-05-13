@@ -124,7 +124,8 @@ function drawNotes(){
         }
     }) 
     .attr("x", d => d['@default-x'])
-    .attr("y", d => get_note_y(d))
+    .attr("y", d => {
+        return get_note_y(d)})
     .style("fill", d => get_note_color(d))
     .style("stroke",  d => get_note_color(d))
     .style("stroke-width", "1")
@@ -149,4 +150,13 @@ function drawTonalRelations(){
         .attr("height", (d, i) => getIntervalHeight(d, i))
         .attr("width", d => getIntervalWidth(d))
         .attr("fill", (d, i) => getIntervalFill(d, i));
+}
+
+function drawTonality(){
+    var key_of_piece = document.getElementById("key-of-piece");
+    key_of_piece.innerHTML = key;
+    var mode_of_piece = document.getElementById("mode-of-piece");
+    var mode = document.getElementById("modulate").value;
+    mode = mode.split("_")[0] 
+    mode_of_piece.innerHTML = mode;
 }

@@ -1,74 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-<style>
-::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
-}
-
-/* Track */
-::-webkit-scrollbar-track {
-  background: lightgrey; 
-}
- 
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: rgb(23,115,232); 
-}
-
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(23,115,232); 
-}
-p {
-    font-family: "Helvetica";
-}
-#sheet-info-container {
-    width: 30px;
-    display: inline-block;
-    vertical-align: top;
-    height: 100%;
-}
-#sheet-container {
-    width: 97%;
-    overflow-y: overlay;
-    overflow-y: hidden; 
-    display: inline-block;
-    height: 103%;
-}
-#sheet-info {
-    width: 30px;
-    height: 100%;
-}
-#sheet {
-    height: 100%;
-}
-#container{
-    vertical-align: top;
-    -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none; /* Safari */
-     -khtml-user-select: none; /* Konqueror HTML */
-       -moz-user-select: none; /* Old versions of Firefox */
-        -ms-user-select: none; /* Internet Explorer/Edge */
-            user-select: none; /* Non-prefixed version, currently
-                                  supported by Chrome, Edge, Opera and Firefox */
-}
-
-input {
-    -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none; /* Safari */
-     -khtml-user-select: none; /* Konqueror HTML */
-       -moz-user-select: none; /* Old versions of Firefox */
-        -ms-user-select: none; /* Internet Explorer/Edge */
-            user-select: none; /* Non-prefixed version, currently
-                                  supported by Chrome, Edge, Opera and Firefox */
-}
-
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <p><b>Music visualization</b></p>
+<p><b>Tonality: </b><span id="key-of-piece"></span> <span id="mode-of-piece"></span></p>
 <label for="voicing">Choose voicing:</label>
 <select name="voicing" id="voicing">
   </select>
@@ -97,6 +34,20 @@ input {
 <input type="checkbox" id="toggleAggregateIntervals" name="toggleAggregateIntervals" value="1">
 <label for="toggleAggregateIntervals"> Aggregate intervals</label>
 
+<button id="transpose">transpose</button>
+<input id="transpose_degree" type="number" value="0" min="-12" max="12" step="1">
+
+<label for="modulate">Modulate voicing:</label>
+<select name="modulate" id="modulate">
+    <option value="ionian_mode">Ionian</option>
+    <option value="dorian_mode">Dorian</option>
+    <option value="phrygian_mode">Phrygian</option>
+    <option value="lydian_mode">Lydian</option>
+    <option value="mixolydian_mode">Mixolydian</option>
+    <option value="aeolian_mode">Aeolian</option>
+    <option value="locrian_mode">Locrian</option>
+</select>
+
 
 <div id="container">
     <div id="sheet-info-container">
@@ -116,10 +67,11 @@ input {
 <script src="sort-y.js"></script>
 <script src="update-view.js"></script>
 <script src="computations.js"></script>
+<script src="comparisons.js"></script>
 <script src="draw.js"></script>
 
 <script>
-    const immutable_pitch_classes = ["C", "D♭", "D","E♭", "E","F", "G♭","G", "A♭", "A", "B♭","B"];
+    const immutable_pitch_classes = ["C", "D♭", "D","E♭", "E", "F", "G♭","G", "A♭", "A", "B♭","B"];
     const scale_of_measure = 100;
     const beat_units = scale_of_measure/16;
     const sheet_info = d3.select("#sheet-info");
@@ -140,6 +92,21 @@ input {
     var notes = [];
     var chords;
 
+    var key;
+    var key_index;
+    var circle_of_fifths_clockwise = ["C", "G", "D", "A", "E", "B", "G♭"];
+    var circle_of_fifths_counter_clockwise = ["C", "F", "B♭", "E♭", "A♭", "D♭", "G♭"];
+
+    var modes = [
+        {name: "ionian_mode", intervals: [2, 2, 1, 2, 2, 2, 1]},
+        {name: "dorian_mode", intervals: [2, 1, 2, 2, 2, 1, 2]},
+        {name: "phrygian_mode", intervals: [1, 2, 2, 2, 1, 2, 2]},
+        {name: "lydian_mode", intervals: [2, 2, 2, 1, 2, 2, 1]},
+        {name: "mixolydian_mode", intervals: [2, 2, 1, 2, 2, 1, 2]},
+        {name: "aeolian_mode", intervals: [2, 1, 2, 2, 1, 2, 2]},
+        {name: "locrian_mode", intervals: [1, 2, 2, 1, 2, 2, 2]}
+    ];
+
     slider_value = document.getElementById("measure-slider").value;
 
     d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/master/MusicJSON/New_Light.json").then(function(data) {
@@ -150,6 +117,7 @@ input {
         getOctaveSpan();
         createPitchClassesArray();
         overwriteDefaultX();
+        adjustPitchStep();
         adjustSVGSize();
         drawNotes();
         drawStaffs();
@@ -158,7 +126,31 @@ input {
         drawChordLabels();
         drawBeats(2);
         drawTonalRelations();
+        getKey();
+        drawTonality();
     });
+
+    function adjustPitchStep(){
+        for (i = 0; i < notes.length; i++) {
+            if(notes[i].pitch.step && notes[i].pitch.alter){
+                var old_index = immutable_pitch_classes.indexOf(notes[i].pitch.step);
+                var altered_index = old_index+parseInt(notes[i].pitch.alter);
+                notes[i].pitch.step = immutable_pitch_classes[altered_index];
+            }
+        }
+    }
+
+    function getKey(){
+        var key_fifths = default_data.part[0].measure[0].attributes.key.fifths;
+        if(key_fifths > 0) {
+            key = circle_of_fifths_clockwise[key_fifths];
+        } else if (key_fifths < 0) {
+            key = circle_of_fifths_clockwise[key_fifths];
+        } else {
+            key = circle_of_fifths_clockwise[0];
+        }
+        key_index = immutable_pitch_classes.indexOf(key);
+    }
 
 
     function setupUI(data){
@@ -283,7 +275,7 @@ input {
                     notes[i]['@default-x'] = sum_previous_durations;
                     sum_previous_durations += (beat_units)*parseInt(notes[i]["duration"]); 
                     notes[i]['@default-dx'] = sum_previous_durations;
-                } else if(notes[i]["grace"]){ //not grace notes[i]s
+                } else if(notes[i]["grace"]){ //not grace notes
                     notes[i]['@default-x'] = sum_previous_durations;
                     notes[i]['@default-dx'] = sum_previous_durations;
                 } else if(notes[i]['chord']) {

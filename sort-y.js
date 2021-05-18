@@ -64,6 +64,13 @@ function adjustBarHeight(){
         return d["@default-y"]
     });
 
+    sheet.selectAll(".transpose-note").transition().duration(500)
+    .attr("height", d=> bar_height)
+    .attr("y", d => {
+        d["@default-y"] = get_note_y(d);
+        return d["@default-y"]
+    });
+
     sheet.selectAll(".harmonic-relation")
     .transition().duration(500)
     .attr("y", (d, i) => {
@@ -169,6 +176,11 @@ function adjustMeasureRange(transition_duration){
     sheet.style("width", sheet_width+"px");
 
     sheet.selectAll(".note")
+    .transition().duration(transition_duration)
+    .attr("x", d => (d['@default-x']*slider_value))
+    .attr("width", d => ((scale_of_measure/16)*parseInt(d["duration"])*slider_value));
+
+    sheet.selectAll(".transpose-note")
     .transition().duration(transition_duration)
     .attr("x", d => (d['@default-x']*slider_value))
     .attr("width", d => ((scale_of_measure/16)*parseInt(d["duration"])*slider_value));

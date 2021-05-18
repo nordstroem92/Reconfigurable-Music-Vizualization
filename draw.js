@@ -124,18 +124,31 @@ function drawNotes(){
         }
     }) 
     .attr("x", d => d['@default-x'])
-    .attr("y", d => {
-        return get_note_y(d)})
+    .attr("y", d => get_note_y(d))
     .style("fill", d => get_note_color(d))
     .style("stroke",  d => get_note_color(d))
     .style("stroke-width", "1")
-    .on("mouseover", function() {  
+    .style("rx", 2)
+    .on("mouseover", function(d) {  
       d3.select(this).transition().duration('50')
-        .style('fill', 'rgba(20, 20, 100, 0.2)')
+        .style('fill', 'rgba(20, 20, 100, 0.2)');
+        
+        sheet.select("rect.tooltip")
+        .style("opacity", "0.8")
+        .attr("x", (parseInt(d['@default-x'])*slider_value)+20)
+        .attr("y", get_note_y(d)+10)
+
+        sheet.select("text.tooltip-text").style("opacity", "1")
+        .attr("x", (parseInt(d['@default-x'])*slider_value)+30)
+        .attr("y", get_note_y(d)+20)
+        .text("Note: "+d.pitch.step+d.pitch.octave);
     })
     .on("mouseleave", function() {  
       d3.select(this).transition().duration('50')
-        .style('fill', 'rgba(0, 0, 0, 0.6)')
+        .style('fill', d => get_note_color(d))
+
+        sheet.select("rect.tooltip").style("opacity", "0")
+        sheet.select("text.tooltip-text").style("opacity", "0")
     })
 }
 

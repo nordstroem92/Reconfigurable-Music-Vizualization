@@ -37,7 +37,13 @@
 <button id="transpose">transpose</button>
 <input id="transpose_degree" type="number" value="0" min="-12" max="12" step="1">
 
-<label for="modulate">Modulate voicing:</label>
+
+<button id="negate-btn">Negative harmony</button>
+
+
+
+<button id="modulate-btn">Modulate</button>
+<label for="modulate">Modulations:</label>
 <select name="modulate" id="modulate">
     <option value="ionian_mode">Ionian</option>
     <option value="dorian_mode">Dorian</option>
@@ -128,7 +134,21 @@
         drawTonalRelations();
         getKey();
         drawTonality();
+        drawToolTip();
     });
+
+    function drawToolTip(){
+        sheet.append("rect")	
+            .attr("class", "tooltip")				
+            .style("opacity", 0);
+
+        sheet.append("text")	
+            .attr("class", "tooltip-text")				
+            .style("opacity", 0)
+            .attr("font-size", "10px")
+            .attr("font-family", "Arial")
+            .text("");
+    }
 
     function adjustPitchStep(){
         for (i = 0; i < notes.length; i++) {
@@ -242,11 +262,17 @@
             var interval = immutable_pitch_classes.indexOf(d.pitch.step) - immutable_pitch_classes.indexOf(notes[i-1].pitch.step)
             if (interval < 0) { interval = 12+interval }
             if (interval == 0 || interval == 12 || interval == 7 || interval == 5) { //Perfect: p1 p8 p5 p4
-                return "rgba(0,0,255,0.4)";
-            } else if (interval == 3 || interval == 4 || interval == 8 || interval == 9) { //Imperfect: M3 m3 M6 m6
-                return "rgba(255,0,255,0.4)";
-            } else if (interval == 1 || interval == 2 || interval == 10 || interval == 11 || interval == 6) { //Dissonant: M2 m2 M7 m7 d5 A4
-                return "rgba(255,0,0,0.5)"; 
+                return "rgba(209,229,240, 0.6)";                
+            } else if(interval == 3 || interval == 8){ //Imperfect minor
+                return "rgb(103,169,207, 0.6)"; 
+            } else if(interval == 4 || interval == 9) { //Imperfect: M3 M6
+                return "rgba(33,102,172, 0.6)";
+            } else if(interval == 6) {//dissonant
+                return "rgba(253,219,199, 0.6)"; 
+            } else if(interval == 1 || interval == 10){ //dissonant m1, m7
+                return "rgba(239,138,98, 0.6)";
+            } else if ( interval == 2 ||  interval == 11 ){ //dissonant M1, M7
+                return "rgba(178,24,43, 0.6)"; 
             }
         } else {
             return 0;
@@ -304,7 +330,7 @@
         if (!d.pitch) {
             return 0;
         } else {
-            var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave+1; //this is probably a stupid solution
+            var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave+1;
             var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step && pc.oct_index == d_relative_oct);
             var pitch_index = pitch_classes.indexOf(pitch_name)+1;
             d["@default-y"] = sheet_height-pitch_index*bar_height;
@@ -313,8 +339,8 @@
     }
 
     function get_note_color(d){
-        var stroke_color = (d["pitch"]) ? "rgba(0, 0, 0, 0.6)" : "none";
-        if(d['grace']){ stroke_color = "rgba(0, 0, 0, 0.6)";}
+        var stroke_color = (d["pitch"]) ? "rgba(0, 0, 0, 0.8)" : "none";
+        if(d['grace']){ stroke_color = "rgba(0, 0, 0, 0.8)";}
         return stroke_color;
     }
 

@@ -60,3 +60,11 @@ input {
             user-select: none; /* Non-prefixed version, currently
                                 supported by Chrome, Edge, Opera and Firefox */
 }
+
+.tooltip {	
+    width: 60px;
+    height: 15px;
+    fill: white;		
+    rx: 3px;	
+    stroke: black;			
+}

@@ -68,3 +68,33 @@ input {
     rx: 3px;	
     stroke: black;			
 }
+
+h1 {
+    font-family: arial;
+    font-size: 20px;
+}
+p, label, button, input, select {
+    font-family: arial;
+    font-size: 12px;
+}
+
+#transpose_degree {
+    width: 30px;
+}
+
+input[type="range"] {
+    width: 120px;
+    height: 7px;
+}
+input[type="checkbox"] {
+    height: 11px;
+}
+label {
+    line-height: 20px;
+}
+
+hr {
+    border: none;
+    border-bottom: 1px solid #CCCCCC;
+    filter: drop-shadow(0px 1px 2px #CCCCCC);
+}

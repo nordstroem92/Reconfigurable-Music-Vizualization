@@ -51,9 +51,9 @@ function intervalLineChart() {
 
     var default_bar_height = 15;
 
-    sheet.transition().duration(500).style("height", 12*3*default_bar_height+"px");
-    d3.select("#sheet-info-container").transition().duration(500).style("height",  12*3*default_bar_height+"px");
-    d3.select("#container").transition().duration(500).style("height",  12*3*default_bar_height+"px");
+    sheet.transition().duration(500).style("height", 12*2*default_bar_height+"px");
+    d3.select("#sheet-info-container").transition().duration(500).style("height",  12*2*default_bar_height+"px");
+    d3.select("#container").transition().duration(500).style("height",  12*2*default_bar_height+"px");
 
     for (i = 0; i < interval_classes.length; i++){
         interval_classes[i].sum_x = 0;
@@ -73,7 +73,6 @@ function intervalLineChart() {
             return 0;
         }
     })
-
     .attr("height", d => {
         if(d['chord']) { 
             return default_bar_height;  
@@ -81,14 +80,13 @@ function intervalLineChart() {
             return 0;
         }
     })
-
     .attr("y", (d, i) => {
         if(d['chord']) {       
             var interval = immutable_pitch_classes.indexOf(notes[i-1].pitch.step)-immutable_pitch_classes.indexOf(d.pitch.step);
             if(interval < 0) {
                 interval = 12 + interval;
             }
-            return (interval*3*default_bar_height)+default_bar_height;
+            return (interval*2*default_bar_height)+default_bar_height;
         } else {
             return -10;
         }
@@ -101,7 +99,7 @@ function intervalLineChart() {
     .attr("class", "interval-name") 
     .text((d) => d.interval_name)
     .attr("y", (d, i) => {
-        return sheet_height - (i+1)*3*default_bar_height;
+        return sheet_height - (i+1)*2*default_bar_height;
     });
 }
 
@@ -135,7 +133,7 @@ function makeLineChart() {
     sheet.selectAll(".note")
     .transition().duration(500)
     .attr("x", d => {  
-        var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave+1; //this is probably a stupid solution
+        var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave; //this is probably a stupid solution
         var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step && pc.oct_index == d_relative_oct);
         var pitch_index = pitch_classes.indexOf(pitch_name);
         x = pitch_classes[pitch_index].sum_x;

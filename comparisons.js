@@ -31,6 +31,7 @@ function showTranspose(){
         .append("rect")
         .attr("class", "transpose-note")
         .attr("height", bar_height)
+        .attr("rx", 3)
         .attr("width",  (d, i) => {
             if(!d['grace']) {
                 return (beat_units)*parseInt(d["duration"])*slider_value;
@@ -137,6 +138,7 @@ function showModes(mode){
     .append("rect")
     .attr("class", "transpose-note")
     .attr("height", bar_height)
+    .attr("rx", 3)
     .attr("width",  (d, i) => {
         if(!d['grace']) {
             return (beat_units)*parseInt(d["duration"])*slider_value;
@@ -201,11 +203,8 @@ function modulate(){
         }
     });
 
-    sheet.selectAll(".harmonic-relation")
-    .transition().duration(300)
-    .style("opacity", "1")
-    .attr("y", d => getIntervalY(d))
-    .attr("height", (d, i) => getIntervalHeight(d, i));
+    sheet.selectAll(".harmonic-relation").remove();
+    drawTonalRelations();
 
     previous_mode = new_mode;
     drawTonality();
@@ -238,6 +237,7 @@ function showNegativeHarmony(){
     .append("rect")
     .attr("class", "transpose-note")
     .attr("height", bar_height)
+    .attr("rx", 3)
     .attr("width",  (d, i) => {
         if(!d['grace']) {
             return (beat_units)*parseInt(d["duration"])*slider_value;
@@ -281,7 +281,6 @@ function negateHarmony(){
         counter_clockwise_index = (counter_clockwise_index > 0) ? counter_clockwise_index-1:(counter_clockwise_index-1)+12;
     }
 
-    sheet.selectAll(".harmonic-relation").transition().duration(500).style("opacity", "1");
     sheet.selectAll(".note")
     .data(notes)
     .transition().duration(300)
@@ -295,9 +294,6 @@ function negateHarmony(){
         return get_note_y(d);
     });
 
-    sheet.selectAll(".harmonic-relation")
-    .transition().duration(300)
-    .style("opacity", "1")
-    .attr("y", d => getIntervalY(d))
-    .attr("height", (d, i) => getIntervalHeight(d, i));
+    sheet.selectAll(".harmonic-relation").remove();
+    drawTonalRelations();
 }

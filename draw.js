@@ -8,8 +8,9 @@ function drawStaffs(){
     .attr("width", "100%")
     .attr("y", (d, i) => getStaffOrLabelHeight(i))
     .style("fill", "none")
-    .style("stroke", "rgba(0,0,0,0.5)")
-    .style("stroke-width", "0.1");
+    .attr("shape-rendering", "crispEdges")
+    .style("stroke", "rgba(0,0,0,0.1)")
+    .style("stroke-width", "0.5");
 }
 
 function drawYLabels(){
@@ -22,8 +23,8 @@ function drawYLabels(){
     .attr("width", "100%")
     .attr("y", (d, i) => getStaffOrLabelHeight(i))
     .attr("id", d => d.name)
-    .style("fill", "none")
-    .style("stroke", "rgba(0,0,0,0.5)")
+    .style("fill", "rgb(225,225,230)")
+    .style("stroke", "rgba(0,0,0,0.1)")
     .style("stroke-width", "1")
 
     sheet_info.selectAll("text.y-labels")
@@ -32,11 +33,11 @@ function drawYLabels(){
     .append("text")
     .attr("class", "y-label")
     .attr("x", 8 )
-    .attr("y", (d, j) => sheet_height-j*bar_height)
-    .attr("font-size", "10px")
+    .attr("y", (d, j) => sheet_height-j*bar_height-(bar_height/6))
+    .attr("font-size", "9px")
     .attr("font-family", "Arial")
     .text(d => {
-        var d_octave = parseInt(lowest_octave)+parseInt(d.oct_index-1);
+        var d_octave = parseInt(lowest_octave)+parseInt(d.oct_index);
         return d.name + " " +d_octave;
     });
 }
@@ -51,8 +52,9 @@ function drawMeasures() {
         .attr("y1", () => offset_top)
         .attr("x2", d => parseInt(d["@number"])*scale_of_measure)
         .attr("y2", () => sheet_height)
+        .attr("shape-rendering", "crispEdges")
         .style("stroke", "black")
-        .style("stroke-width", 1);
+        .style("stroke-width", "0.5");
 }
 
 function drawBeats(s) {
@@ -76,8 +78,9 @@ function drawBeats(s) {
             return (j+(i*sum_of_measures))*length;
         })
         .attr("y2", d => sheet_height)
-        .style("stroke", "rgba(100,100,100, 0.3)")
-        .style("stroke-width", 1);
+        .attr("shape-rendering", "crispEdges")
+        .style("stroke", "rgba(0,0,0,0.1)")
+        .style("stroke-width", 0.5);
     }
 }
 
@@ -163,6 +166,7 @@ function drawTonalRelations(){
         .attr("height", (d, i) => getIntervalHeight(d, i))
         .attr("width", d => getIntervalWidth(d))
         .attr("fill", (d, i) => getIntervalFill(d, i));
+        
 }
 
 function drawTonality(){

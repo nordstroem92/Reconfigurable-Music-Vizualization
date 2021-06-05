@@ -2,10 +2,6 @@ document.getElementById("circle-of-fifths-sort").onclick = function(event) { //S
     sortYAxis_custom(circle_of_fifths_sort); 
 }
 
-document.getElementById("scale-degrees-only").onclick = function(event) { //Sort by circle of fifths
-    scaleDegreesOnly(); 
-}
-
 document.getElementById("voicing").onchange = function() { //Sort by circle of fifths
     var e = document.getElementById("voicing");
     var value = e.options[e.selectedIndex].value;
@@ -89,7 +85,7 @@ function adjustBarHeight(){
 
     sheet_info.selectAll(".y-label").transition().duration(500)
     .attr("height", bar_height)
-    .attr("y", (d, i) => sheet_height-(i)*bar_height);
+    .attr("y", (d, i) => sheet_height-(i)*bar_height-(bar_height/6));
 }
 
 function scaleDegreesOnly(){
@@ -225,7 +221,7 @@ function sortYAxis_custom(sorting_pattern) {
     sheet_info.selectAll(".y-label")
         .sort((a,b) => sorting_pattern(a, b))
         .transition().duration(500)
-        .attr("y", (d, i) => sheet_height-i*bar_height);
+        .attr("y", (d, i) => sheet_height-i*bar_height-(bar_height/6));
 
     sheet_info.selectAll(".pitch-class")
         .sort((a,b) => sorting_pattern(a, b))

@@ -4,23 +4,29 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<p><b>Music visualization</b></p>
+<h1>Reconfigurable music notation</h1>
 <p><b>Tonality: </b><span id="key-of-piece"></span> <span id="mode-of-piece"></span></p>
+<p>Color legend: <span style="padding: 2px 10px; border: 1px solid black; background-color: rgba(5, 143, 255, 0.4);">Major</span> <span style="padding: 2px 10px; border: 1px solid black; background-color: rgb(255, 203, 0,0.4)">Minor</span> <span style="padding: 2px 10px; border: 1px solid black; background-color: rgb(220,220,220);">Consonant</span> <span style="padding: 2px 10px; border: 1px solid black; background-color: rgba(204, 51, 17,0.4)">Dissonant</span></p>
 <label for="voicing">Choose voicing:</label>
 <select name="voicing" id="voicing">
   </select>
 <button id="c-major-sort">c-major</button>
 <button id="circle-of-fifths-sort">circle-of-fifths sort</button>
-<button id="scale-degrees-only">Scale degrees only</button><br><br>
 
-<label for="points">x-axis:</label>
+<input type="checkbox" id="only_con_dis" name="only_con_dis" value="1">
+<label for="only_con_dis"> only_con_dis</label>
+
+<input type="checkbox" id="only_min_maj" name="only_min_maj" value="1">
+<label for="only_min_maj"> only_min_maj</label><br><br>
+
+<label for="points">x-scale:</label>
 <input id="measure-slider" type="range" name="points" min="0.3" max="1.5" step="0.1" value=1>
+
+<label for="points">y-scale</label>
+<input id="bar-height-slider" type="range" name="points" min="10" max="15" value="10">
 
 <label for="points">beat units:</label>
 <input id="beat-unit-slider" type="range" name="points" value="2" min="0" max="8" step="2">
-
-<label for="points">bar-height slider</label>
-<input id="bar-height-slider" type="range" name="points" min="10" max="15" value="10">
 
 <input checked type="checkbox" id="toggleTonalRelations" name="toggleTonalRelations" value="1">
 <label for="toggleTonalRelations"> Show interval qualities</label>
@@ -53,7 +59,8 @@
     <option value="aeolian_mode">Aeolian</option>
     <option value="locrian_mode">Locrian</option>
 </select>
-
+<br><br>
+<hr>
 
 <div id="container">
     <div id="sheet-info-container">
@@ -192,7 +199,7 @@
     }
 
     function createPitchClassesArray(){
-        for(i = 1; i < octave_span+1; i++) {
+        for(i = 0; i < octave_span; i++) {
             pitch_classes.push( 
             {name:"C", oct_index: i}, {name:"D♭", oct_index: i}, 
             {name:"D", oct_index: i}, {name:"E♭", oct_index: i}, 
@@ -257,25 +264,69 @@
         return d["@default-dx"]-d["@default-x"];
     }
 
+    var only_con_dis = false;
+    var only_min_maj = false;
+
+    document.getElementById("only_con_dis").onclick = function() { //Sort by circle of fifths
+        if (only_con_dis == false) {
+            only_con_dis = true; 
+            sheet.selectAll(".harmonic-relation")
+            .attr("fill", (d, i) => getIntervalFill(d, i));
+        } else {
+            only_con_dis = false;
+            sheet.selectAll(".harmonic-relation")
+            .attr("fill", (d, i) => getIntervalFill(d, i));
+        }
+    }
+
+    document.getElementById("only_min_maj").onclick = function() { //Sort by circle of fifths
+        if (only_min_maj == false) {
+            only_min_maj = true; 
+            sheet.selectAll(".harmonic-relation")
+            .attr("fill", (d, i) => getIntervalFill(d, i));
+        } else {
+            only_min_maj = false;
+            sheet.selectAll(".harmonic-relation")
+            .attr("fill", (d, i) => getIntervalFill(d, i));
+        }
+    }
+
     function getIntervalFill(d, i){
         if(d['chord']){
             var interval = immutable_pitch_classes.indexOf(d.pitch.step) - immutable_pitch_classes.indexOf(notes[i-1].pitch.step)
             if (interval < 0) { interval = 12+interval }
-            if (interval == 0 || interval == 12 || interval == 7 || interval == 5) { //Perfect: p1 p8 p5 p4
-                return "rgba(209,229,240, 0.6)";                
-            } else if(interval == 3 || interval == 8){ //Imperfect minor
-                return "rgb(103,169,207, 0.6)"; 
-            } else if(interval == 4 || interval == 9) { //Imperfect: M3 M6
-                return "rgba(33,102,172, 0.6)";
-            } else if(interval == 6) {//dissonant
-                return "rgba(253,219,199, 0.6)"; 
-            } else if(interval == 1 || interval == 10){ //dissonant m1, m7
-                return "rgba(239,138,98, 0.6)";
-            } else if ( interval == 2 ||  interval == 11 ){ //dissonant M1, M7
-                return "rgba(178,24,43, 0.6)"; 
+
+            if (only_con_dis == false && only_min_maj == false) {
+                if (interval == 0 || interval == 12 || interval == 7 || interval == 5) { //Perfect: p1 p8 p5 p4
+                    return "rgba(220, 220, 220, 0.4)";            
+                } else if(interval == 3 || interval == 8){ //Imperfect minor
+                    return "rgb(	255, 203, 0,0.4)"; 
+                } else if(interval == 4 || interval == 9) { //Imperfect: M3 M6
+                    return "rgba(5, 143, 255, 0.4)";
+                } else if(interval == 6) {//dissonant
+                    return "rgba(204, 51, 17,0.4)"; 
+                } else if(interval == 1 || interval == 10){ //dissonant m1, m7
+                    return "rgba(204, 51, 17,0.4)";
+                } else if ( interval == 2 ||  interval == 11 ){ //dissonant M1, M7
+                    return "rgba(204, 51, 17,0.4)"; 
+                }
+            } else if (only_con_dis == true && only_min_maj == false) {
+                if (interval == 0 || interval == 12 || interval == 7 || interval == 5 || interval == 3 || interval == 8 || interval == 4 || interval == 9) {
+                    return "rgba(220, 220, 220, 0.4)";  
+                } else if (interval == 6 || interval == 1 || interval == 10 || interval == 2 || interval == 11) {
+                    return "rgba(204, 51, 17,0.4)"; 
+                }
+            } else if (only_min_maj == true && only_con_dis == false) {
+                if (interval == 4 || interval == 9 || interval == 2 ||  interval == 11) {
+                    return "rgba(5, 143, 255, 0.4)";
+                } else if (interval == 3 || interval == 8 || interval == 1 || interval == 10) {
+                    return "rgb(255, 203, 0,0.4)"; 
+                } else if (interval == 0 || interval == 12 || interval == 7 || interval == 5 || interval == 6) {
+                    return "rgba(220, 220, 220, 0)"; 
+                }
+            } else {
+                return 0;
             }
-        } else {
-            return 0;
         }
     }
 
@@ -330,7 +381,7 @@
         if (!d.pitch) {
             return 0;
         } else {
-            var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave+1;
+            var d_relative_oct = parseInt(d.pitch.octave) - lowest_octave;
             var pitch_name = pitch_classes.find(pc => pc.name == d.pitch.step && pc.oct_index == d_relative_oct);
             var pitch_index = pitch_classes.indexOf(pitch_name)+1;
             d["@default-y"] = sheet_height-pitch_index*bar_height;

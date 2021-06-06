@@ -122,9 +122,10 @@
 
     slider_value = document.getElementById("measure-slider").value;
 
-    d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/master/MusicJSON/New_Light.json").then(function(data) {
+    d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/master/MusicJSON/calvinharris_summer.json").then(function(data) {
+        console.log(data)
         default_data = data;
-        data_part = default_data.part[2];
+        data_part = default_data.part;
         setupUI(data);
         createNotesArray();
         getOctaveSpan();
@@ -168,7 +169,7 @@
     }
 
     function getKey(){
-        var key_fifths = default_data.part[0].measure[0].attributes.key.fifths;
+        var key_fifths = data_part.measure[0].attributes.key.fifths;
         if(key_fifths > 0) {
             key = circle_of_fifths_clockwise[key_fifths];
         } else if (key_fifths < 0) {
@@ -244,25 +245,6 @@
         }
     }
 
-    function getIntervalY(d){
-        if(d["chord"]) {
-            return d["@default-y"]+bar_height;
-        } else {
-            return 100;
-        }
-    }
-
-    function getIntervalHeight(d, i){
-        if(d['chord'] && notes[i-1]["@default-y"]-d["@default-y"] > 0){
-            return notes[i-1]["@default-y"]-d["@default-y"]-bar_height;
-        } else {
-            return 0;
-        }
-    }
-
-    function getIntervalWidth(d){
-        return d["@default-dx"]-d["@default-x"];
-    }
 
     var only_con_dis = false;
     var only_min_maj = false;
@@ -288,45 +270,6 @@
             only_min_maj = false;
             sheet.selectAll(".harmonic-relation")
             .attr("fill", (d, i) => getIntervalFill(d, i));
-        }
-    }
-
-    function getIntervalFill(d, i){
-        if(d['chord']){
-            var interval = immutable_pitch_classes.indexOf(d.pitch.step) - immutable_pitch_classes.indexOf(notes[i-1].pitch.step)
-            if (interval < 0) { interval = 12+interval }
-
-            if (only_con_dis == false && only_min_maj == false) {
-                if (interval == 0 || interval == 12 || interval == 7 || interval == 5) { //Perfect: p1 p8 p5 p4
-                    return "rgba(220, 220, 220, 0.4)";            
-                } else if(interval == 3 || interval == 8){ //Imperfect minor
-                    return "rgb(	255, 203, 0,0.4)"; 
-                } else if(interval == 4 || interval == 9) { //Imperfect: M3 M6
-                    return "rgba(5, 143, 255, 0.4)";
-                } else if(interval == 6) {//dissonant
-                    return "rgba(204, 51, 17,0.4)"; 
-                } else if(interval == 1 || interval == 10){ //dissonant m1, m7
-                    return "rgba(204, 51, 17,0.4)";
-                } else if ( interval == 2 ||  interval == 11 ){ //dissonant M1, M7
-                    return "rgba(204, 51, 17,0.4)"; 
-                }
-            } else if (only_con_dis == true && only_min_maj == false) {
-                if (interval == 0 || interval == 12 || interval == 7 || interval == 5 || interval == 3 || interval == 8 || interval == 4 || interval == 9) {
-                    return "rgba(220, 220, 220, 0.4)";  
-                } else if (interval == 6 || interval == 1 || interval == 10 || interval == 2 || interval == 11) {
-                    return "rgba(204, 51, 17,0.4)"; 
-                }
-            } else if (only_min_maj == true && only_con_dis == false) {
-                if (interval == 4 || interval == 9 || interval == 2 ||  interval == 11) {
-                    return "rgba(5, 143, 255, 0.4)";
-                } else if (interval == 3 || interval == 8 || interval == 1 || interval == 10) {
-                    return "rgb(255, 203, 0,0.4)"; 
-                } else if (interval == 0 || interval == 12 || interval == 7 || interval == 5 || interval == 6) {
-                    return "rgba(220, 220, 220, 0)"; 
-                }
-            } else {
-                return 0;
-            }
         }
     }
 

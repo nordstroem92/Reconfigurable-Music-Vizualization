@@ -241,7 +241,7 @@ function sortYAxis_custom(sorting_pattern) {
     
     sheet.selectAll(".harmonic-relation")
         .transition().duration(500)
-        .attr("y", d => getIntervalY(d))
+        .attr("y", (d, i) => getIntervalY(d, i))
         .attr("height", (d, i) => getIntervalHeight(d, i))
         .attr("fill", (d, i) => getIntervalFill(d, i));
 }

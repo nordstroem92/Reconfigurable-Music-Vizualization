@@ -88,7 +88,7 @@ function transpose(){
 
     sheet.selectAll(".harmonic-relation")
     .transition().duration(300)
-    .attr("y", d => getIntervalY(d))
+    .attr("y", (d,i) => getIntervalY(d,i))
     .style("opacity", "1");
     
     var t = parseInt(document.getElementById("transpose_degree").value); //UPDATE KEY
@@ -210,7 +210,56 @@ function modulate(){
     drawTonality();
 }
 
-function showNegativeHarmony(){
+function negateHarmony(){
+    var circle_of_fifths_array =["C", "G", "D", "A", "E", "B", "G♭", "D♭", "A♭", "E♭", "B♭", "F"];
+    var cof_key_index = circle_of_fifths_array.indexOf(key)
+    var clockwise_index = (cof_key_index + 1)%12;
+    var counter_clockwise_index = cof_key_index;
+
+    var right_half = [];
+    var left_half = [];
+
+    for(i = 0; i < 6 ; i++){
+        right_half.push(circle_of_fifths_array[clockwise_index]);
+        clockwise_index = (clockwise_index+1)%12;
+    }
+    for(i = 0; i < 6 ; i++){
+        left_half.push(circle_of_fifths_array[counter_clockwise_index]);
+        counter_clockwise_index = (counter_clockwise_index > 0) ? counter_clockwise_index-1:(counter_clockwise_index-1)+12;
+    }
+
+    sheet.selectAll(".note")
+    .transition().duration(300)
+    .attr("y", (d, i) => {
+        for (j = 0; j < 6; j++) {
+            if (d.pitch.step === right_half[j]) {
+                d.pitch.step = left_half[j];
+            } else if (d.pitch.step === left_half[j])
+                d.pitch.step = right_half[j];
+            }
+        return get_note_y(d);
+    });
+
+    sheet.selectAll(".harmonic-relation").remove();
+    notes = notes.sort((a,b) => ascendingSort(a, b))
+    drawTonalRelations();
+}
+
+function ascendingSort(a, b){
+    if(a["@default-x"] < b["@default-x"]) {
+        return -1; 
+    } else if(a["@default-x"] == b["@default-x"]) {
+        if(a["@default-y"] > b["@default-y"]) {
+            return -1; 
+        } else {
+            return 1;
+        }
+    } else if(a["@default-x"] > b["@default-x"]) {
+        return 1;
+    }
+}
+
+/*function showNegativeHarmony(){
     var circle_of_fifths_array =["C", "G", "D", "A", "E", "B", "G♭", "D♭", "A♭", "E♭", "B♭", "F"];
     var cof_key_index = circle_of_fifths_array.indexOf(key)
     var clockwise_index = (cof_key_index + 1)%12;
@@ -261,39 +310,4 @@ function showNegativeHarmony(){
         return get_note_y(d);
         }
     });
-}
-
-function negateHarmony(){
-    var circle_of_fifths_array =["C", "G", "D", "A", "E", "B", "G♭", "D♭", "A♭", "E♭", "B♭", "F"];
-    var cof_key_index = circle_of_fifths_array.indexOf(key)
-    var clockwise_index = (cof_key_index + 1)%12;
-    var counter_clockwise_index = cof_key_index;
-
-    var right_half = [];
-    var left_half = [];
-
-    for(i = 0; i < 6 ; i++){
-        right_half.push(circle_of_fifths_array[clockwise_index]);
-        clockwise_index = (clockwise_index+1)%12;
-    }
-    for(i = 0; i < 6 ; i++){
-        left_half.push(circle_of_fifths_array[counter_clockwise_index]);
-        counter_clockwise_index = (counter_clockwise_index > 0) ? counter_clockwise_index-1:(counter_clockwise_index-1)+12;
-    }
-
-    sheet.selectAll(".note")
-    .data(notes)
-    .transition().duration(300)
-    .attr("y", (d, i) => {
-        for (j = 0; j < 6; j++) {
-            if (d.pitch.step === right_half[j]) {
-                d.pitch.step = left_half[j];
-            } else if (d.pitch.step === left_half[j])
-                d.pitch.step = right_half[j];
-            }
-        return get_note_y(d);
-    });
-
-    sheet.selectAll(".harmonic-relation").remove();
-    drawTonalRelations();
-}
+}*/

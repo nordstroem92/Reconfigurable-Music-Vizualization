@@ -122,10 +122,10 @@
 
     slider_value = document.getElementById("measure-slider").value;
 
-    d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/master/MusicJSON/calvinharris_summer.json").then(function(data) {
-        console.log(data)
+    d3.json("https://raw.githubusercontent.com/nordstroem92/musicviz/master/MusicJSON/Ivy.json").then(function(data) {
+        console.log(data);
         default_data = data;
-        data_part = default_data.part;
+        data_part = default_data.part[0];
         setupUI(data);
         createNotesArray();
         getOctaveSpan();
@@ -159,11 +159,14 @@
     }
 
     function adjustPitchStep(){
+        console.log(notes)
         for (i = 0; i < notes.length; i++) {
-            if(notes[i].pitch.step && notes[i].pitch.alter){
+            if(notes[i].pitch) {
+                if(notes[i].pitch.step && notes[i].pitch.alter){
                 var old_index = immutable_pitch_classes.indexOf(notes[i].pitch.step);
                 var altered_index = old_index+parseInt(notes[i].pitch.alter);
                 notes[i].pitch.step = immutable_pitch_classes[altered_index];
+                }
             }
         }
     }
